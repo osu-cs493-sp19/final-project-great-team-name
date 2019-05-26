@@ -27,7 +27,7 @@ app.use('/', api);
  * Default error handling route
  */
 app.use('*', (err, req, res, next) => {
-  console.error(err);
+  console.error(" == Caught CustomError: ", err.code, err.message);
   res.status(err.code).send({
     error: err.message
   });

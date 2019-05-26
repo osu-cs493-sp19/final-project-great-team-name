@@ -40,20 +40,27 @@ router.get('/:id', requireAuthentication, async (req, res, next) => {
 
 
 /*
- * Create a new user
- * requiresAuthentication - check for valid token
+ * Create a new User
+ * requiresAuthentication - check for valid token (will bypass for student role)
  *
  */
- router.post('/', async (req, res, next) => {
+ router.post('/', requireAuthentication, async (req, res, next) => {
+
    if (validateAgainstSchema(req.body, UserSchema)) {
-     try {
+     // Only an Admin can create admin/instructor Users
+     if (req.body.role != 'student' && ( !req.user || req.user.role != 'admin'))  {
+       next(new CustomError("Not authorized", 403));
+     } else {
 
-        const id = await insertNewUser(req.body);
-        res.status(201).send({id: id})
+       try {
 
-     } catch (err) {
-       // Throw a 500 for all errors incuding DB issues
-       next(new CustomError("Error adding user.", 500));
+          const id = await insertNewUser(req.body);
+          res.status(201).send({id: id});
+
+       } catch (err) {
+         // Throw a 500 for all errors incuding DB issues
+         next(new CustomError("Error adding user.", 500));
+       }
      }
 
    } else {
@@ -73,10 +80,10 @@ router.post('/login', async (req, res, next) => {
 
       if (auth) {
         // Fetch additional data about user to include in token
-        //const user = getUserDetailsByEmail(req.body.email);
+        //const user = await getUserDetailsByEmail(req.body.email);
 
         // Static data for testing
-        var user = {};      
+        var user = {};
         user.id = "17";
         user.email = "user@example.com";
         user.role = 'admin';

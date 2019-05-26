@@ -32,7 +32,7 @@ exports.SubmissionSchema = SubmissionSchema;
 
 
 /*
- * Creates a new assignment object in the DB & returns id
+ * Creates a new assignment object in the DB & returns Id
  */
 exports.insertAssignment = async (assignment) => {
   console.log(" == insertAssignment: assignment", assignment);
@@ -52,7 +52,7 @@ exports.getAssignmentDetailsById = async (id) => {
 
 
 /*
- * Partial update of an assignment
+ * Partial update of an Assignment by Id
  */
 exports.updateAssignment = async (id, assignment) => {
   console.log(" == updateAssignment: id,assignment", id,assignment);
@@ -61,7 +61,7 @@ exports.updateAssignment = async (id, assignment) => {
 }
 
 /*
- * Delete an assignment by Id
+ * Delete an Assignment by Id
  */
 exports.deleteAssignment = async (id) => {
   console.log(" == deleteAssignment: id", id);
@@ -71,7 +71,7 @@ exports.deleteAssignment = async (id) => {
 
 
 /*
- * Fetch paginated list of submissions by assignment Id
+ * Fetch paginated list of submissions by Assignment Id
  */
 exports.getAssignmentSubmissions = async (id, studentId, page) => {
   console.log(" == getAssignmentSubmissions: id,studentId,page", id,studentId,page);

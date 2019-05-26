@@ -10,8 +10,8 @@ const CustomError = require("../lib/custom-error");
 
 
 /*
-* Schema describing required/optional fields of a Course object.
-*/
+ * Schema describing required/optional fields of a Course object.
+ */
 const CourseSchema = {
  subject: { required: true },
  number: { required: true },
@@ -22,8 +22,8 @@ const CourseSchema = {
 exports.CourseSchema = CourseSchema;
 
 /*
-* Schema describing required/optional fields for a Course roster update.
-*/
+ * Schema describing required/optional fields for a Course roster update.
+ */
 const RosterSchema = {
  add: { required: true },
  remove: { required: true }
@@ -53,7 +53,7 @@ exports.insertCourse = async (course) => {
 
 
 /*
- * Insert a new course into the DB
+ * Fetch details about a course by Id
  */
 exports.getCourseDetailsById = async (id) => {
   console.log(" == getCourseDetailsById: id", id);
@@ -63,7 +63,7 @@ exports.getCourseDetailsById = async (id) => {
 
 
 /*
- * Insert a new course into the DB
+ * Perform partial update of a Course by Id
  */
 exports.updateCourse = async (id, course) => {
   console.log(" == updateCourse: course", course);
@@ -73,7 +73,7 @@ exports.updateCourse = async (id, course) => {
 
 
 /*
- * Insert a new course into the DB
+ * Delete a Course by Id
  */
 exports.deleteCourse = async (id) => {
   console.log(" == deleteCourse: id", id);
@@ -83,7 +83,7 @@ exports.deleteCourse = async (id) => {
 
 
 /*
- * Insert a new course into the DB
+ * Fetch the student roster of a course by Id
  */
 exports.getCourseRoster = async (course) => {
   console.log(" == getCourseRoster: course", course);
@@ -93,7 +93,7 @@ exports.getCourseRoster = async (course) => {
 
 
 /*
- * Insert a new course into the DB
+ * Add/Remove students from the Course roster by Id
  */
 exports.updateCourseRoster = async (course, updates) => {
   console.log(" == updateCourseRoster: course, updates", course, updates);
@@ -103,17 +103,17 @@ exports.updateCourseRoster = async (course, updates) => {
 
 
 /*
- * Insert a new course into the DB
+ * Fetch assignments for the Course by Id
  */
 exports.getCourseAssignments = async (course) => {
   console.log(" == getCourseAssignments: course", course);
 
-  return true;
+  return {};
 };
 
 
 /*
- * Check if an instructor owns the specified course
+ * Check if an instructor owns the specified Course Id
  */
 exports.instructorOwnsCourse = async (instructor, course) => {
   console.log(" == instructorOwnsCourse: instructor, course", instructor, course);
@@ -121,8 +121,9 @@ exports.instructorOwnsCourse = async (instructor, course) => {
   return true;
 };
 
+
 /*
- * Check if an student is enrolled in a course
+ * Check if a student is enrolled in the specified Course Id
  */
 exports.studentInCourse = async (student, course) => {
   console.log(" == studentInCourse: student, course", student, course);

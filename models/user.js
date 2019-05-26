@@ -9,7 +9,7 @@ const CustomError = require("../lib/custom-error");
 
 
 /*
-* Schema describing required/optional fields of a user object.
+* Schema describing required/optional fields of a User object.
 */
 const UserSchema = {
  name: { required: true },
@@ -21,7 +21,7 @@ exports.UserSchema = UserSchema;
 
 
 /*
-* Schema describing required fields for authorization.
+* Schema describing required fields for User object for authorization.
 */
 const AuthSchema = {
  email: { required: true },
@@ -31,7 +31,7 @@ exports.AuthSchema = AuthSchema;
 
 
 /*
- * Insert a new user into the database
+ * Insert a new User into the database
  */
 exports.insertNewUser = async (user) => {
   console.log(" == insertNewUser: user", user);
@@ -41,7 +41,7 @@ exports.insertNewUser = async (user) => {
 
 
 /*
- * Authenticate a user against the DB.
+ * Authenticate a User against the DB.
  */
 exports.authenticateUser = async (user) => {
   console.log(" == authenticateUser: user", user);
@@ -51,7 +51,7 @@ exports.authenticateUser = async (user) => {
 
 
 /*
- * Fetch details about a user by Id
+ * Fetch details about a User by Id
  */
 exports.getUserDetailsById = async (id) => {
   console.log(" == getUserDetailsById id", id);
@@ -61,7 +61,7 @@ exports.getUserDetailsById = async (id) => {
 
 
 /*
- * Fetch details about a user by Email address
+ * Fetch details about a User by Email address
  */
 exports.getUserDetailsByEmail = async (email) => {
   console.log(" == getUserDetailsByEmail email", email);

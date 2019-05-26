@@ -4,21 +4,26 @@
  *
  */
 
- const router = require('express').Router();
- const { validateAgainstSchema } = require('../lib/validation');
- const { requireAuthentication, requireCourseInstructorOrAdmin, requireEnrolledStudent } = require('../lib/auth');
- const CustomError = require("../lib/custom-error");
+const router = require('express').Router();
+const { validateAgainstSchema } = require('../lib/validation');
+const CustomError = require("../lib/custom-error");
 
- const {
-    AssignmentSchema,
-    SubmissionSchema,
-    insertAssignment,
-    getAssignmentDetailsById,
-    updateAssignment,
-    deleteAssignment,
-    getAssignmentSubmissions,
-    insertSubmission
- } = require('../models/assignment');
+const {
+  requireAuthentication,
+  requireCourseInstructorOrAdmin,
+  requireEnrolledStudent
+} = require('../lib/auth');
+
+const {
+  AssignmentSchema,
+  SubmissionSchema,
+  insertAssignment,
+  getAssignmentDetailsById,
+  updateAssignment,
+  deleteAssignment,
+  getAssignmentSubmissions,
+  insertSubmission
+} = require('../models/assignment');
 
 
 /*
