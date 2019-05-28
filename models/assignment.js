@@ -5,6 +5,7 @@
  */
 
 const { extractValidFields } = require('../lib/validation');
+const { getDBReference } = require ('../lib/mongo');
 const CustomError = require("../lib/custom-error");
 
 /*
@@ -36,8 +37,10 @@ exports.SubmissionSchema = SubmissionSchema;
  */
 exports.insertAssignment = async (assignment) => {
   console.log(" == insertAssignment: assignment", assignment);
-
-  return "123";
+  const db = getDBReference();
+  const collection = db.collection('assignments');
+  const result = await collection.insertOne(assignment);
+  return result.insertId;
 }
 
 

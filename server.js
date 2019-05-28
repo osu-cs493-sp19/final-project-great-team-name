@@ -2,6 +2,11 @@ const express = require('express');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const CustomError = require("./lib/custom-error");
+const { connectToDB } = require ('./lib/mongo');
+
+const logger = require('./lib/logger');
+
+const {validateAgainstSchema } = ('./lib/validation');
 
 const api = require('./api');
 
@@ -15,6 +20,8 @@ const port = process.env.PORT || 8000;
 app.use(morgan('dev'));
 
 app.use(bodyParser.json());
+
+app.use(logger);
 
 /*
  * All routes for the API are written in modules in the api/ directory.  The
@@ -39,6 +46,13 @@ app.use('*', function (req, res, next) {
   });
 });
 
-app.listen(port, function() {
-  console.log("== Server is running on port", port);
+connectToDB(() => 
+{
+  app.listen(port, function() 
+  {
+    console.log("== Server is running on port", port);
+  });
 });
+
+
+
