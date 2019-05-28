@@ -5,7 +5,7 @@
  */
 const bcrypt = require('bcryptjs');
 const { ObjectId } = require('mongodb');
-const { getDBReference } = require("../lib/mongo")
+const { getDBReference } = require("../lib/mongoDB")
 const { extractValidFields } = require('../lib/validation');
 const CustomError = require("../lib/custom-error");
 
@@ -46,15 +46,15 @@ exports.insertNewUser = async (user) => {
   return SpeechRecognitionResultList.insertedId;
 }
 
-
-/*
- * Authenticate a User against the DB.
- */
-exports.authenticateUser = async (user) => {
-  console.log(" == authenticateUser: user", user);
-
-  return true;
-}
+//
+// /*
+//  * Authenticate a User against the DB.
+//  */
+// exports.authenticateUser = async (user) => {
+//   console.log(" == authenticateUser: user", user);
+//
+//   return true;
+// }
 
 
 /*
@@ -71,7 +71,11 @@ exports.getUserDetailsById = async (id) => {
  * Fetch details about a User by Email address
  */
 exports.getUserDetailsByEmail = async (email) => {
-  console.log(" == getUserDetailsByEmail email", email);
+  const db = getDBReference();
+   var user = await db.collection("users").find({
+    email,
+  });
 
-  return "1234";
+  console.log(" == getUserDetailsByEmail email", email,"\nUser: ",user);
+  return user;
 }
