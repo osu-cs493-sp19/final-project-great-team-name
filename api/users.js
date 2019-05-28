@@ -13,11 +13,11 @@ const {
    UserSchema,
    AuthSchema,
    insertNewUser,
-   authenticateUser,
    getUserDetailsById,
    getUserDetailsByEmail
 } = require('../models/user');
 
+// authenticateUser,
 
 /*
  * Fetches information about a user based on their role

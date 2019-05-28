@@ -42,19 +42,20 @@ exports.insertNewUser = async (user) => {
   const collection = db.collection('users');
   const passwordHash = await bcrypt.hash(userToInsert.password, 8);
   userToInsert.password = passwordHash;
-  const result = await collection.insertOne(userToInsert);
-  return SpeechRecognitionResultList.insertedId;
+  const result = await collection.insertOne(userToInsert).insertId;
+  return result;
 }
 
-//
-// /*
-//  * Authenticate a User against the DB.
-//  */
-// exports.authenticateUser = async (user) => {
-//   console.log(" == authenticateUser: user", user);
-//
-//   return true;
-// }
+
+/*
+ * Authenticate a User against the DB.
+ someone else can work on this
+ */
+exports.authenticateUser = async (user) => {
+  console.log(" == authenticateUser: user", user);
+
+  return true;
+}
 
 
 /*
