@@ -1,8 +1,10 @@
+require('dotenv').config()
+
 const express = require('express');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const CustomError = require("./lib/custom-error");
-
+const {connectToMongo} = require("./lib/mongoDB");
 const api = require('./api');
 
 const app = express();
@@ -39,6 +41,8 @@ app.use('*', function (req, res, next) {
   });
 });
 
-app.listen(port, function() {
+connectToMongo(()=>{
+  app.listen(port, function() {
   console.log("== Server is running on port", port);
 });
+})
