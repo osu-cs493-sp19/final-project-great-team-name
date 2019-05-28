@@ -3,7 +3,9 @@
  * User model and related functions.
  *
  */
-
+const bcrypt = require('bcryptjs');
+const { ObjectId } = require('mongodb');
+const { getDBReference } = require("../lib/mongo")
 const { extractValidFields } = require('../lib/validation');
 const CustomError = require("../lib/custom-error");
 
@@ -35,8 +37,13 @@ exports.AuthSchema = AuthSchema;
  */
 exports.insertNewUser = async (user) => {
   console.log(" == insertNewUser: user", user);
-
-  return "123";
+  const userToInsert = extractValidFields(user, UserSchema);
+  const db = getDBReference();
+  const collection = db.collection('users');
+  const passwordHash = await bcrypt.hash(userToInsert.password, 8);
+  userToInsert.password = passwordHash;
+  const result = await collection.insertOne(userToInsert);
+  return SpeechRecognitionResultList.insertedId;
 }
 
 
