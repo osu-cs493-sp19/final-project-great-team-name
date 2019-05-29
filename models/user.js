@@ -39,10 +39,10 @@ exports.insertNewUser = async (user) => {
   console.log(" == insertNewUser: user", user);
   const userToInsert = extractValidFields(user, UserSchema);
   const db = getDBReference();
-  const collection = db.collection('users');
+  const collection = await db.collection('users');
   const passwordHash = await bcrypt.hash(userToInsert.password, 8);
   userToInsert.password = passwordHash;
-  const result = await collection.insertOne(userToInsert).insertId;
+  const result = await collection.insertOne(userToInsert).insertedId;
   return result;
 }
 
@@ -73,10 +73,13 @@ exports.getUserDetailsById = async (id) => {
  */
 exports.getUserDetailsByEmail = async (email) => {
   const db = getDBReference();
-   var user = await db.collection("users").find({
-    email,
-  });
 
-  console.log(" == getUserDetailsByEmail email", email,"\nUser: ",user);
+  // becasue the varialbe name and the object name are the same,
+  //we can just leave it as { email, } thnx es6
+
+   var user;
+   user = await db.collection('users').findOne({email})
+   console.log(" == getUserDetailsByEmail email", email,"\nUser: ",user);
+   delete user.password;
   return user;
 }
