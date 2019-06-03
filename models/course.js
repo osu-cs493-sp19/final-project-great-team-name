@@ -21,6 +21,8 @@ const CourseSchema = {
  title: { required: true },
  term: { required: true },
  instructorId: { required: true }
+ // list of students
+ // list of assignments
 };
 exports.CourseSchema = CourseSchema;
 
@@ -93,7 +95,7 @@ exports.getCourseDetailsById = async (id) => {
  */
 exports.updateCourse = async (id, course) => {
   console.log(" == updateCourse: course", course);
-  return new Promise((resolve, reject) =>{
+  return new Promise((resolve, reject) => {
     const db = getDBReference();
     db.collection('courses', function(err, collection) {
       collection.updateOne({_id: new mongodb.ObjectID(id)}, {
