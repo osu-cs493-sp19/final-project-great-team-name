@@ -62,9 +62,12 @@ exports.authenticateUser = async (user) => {
  * Fetch details about a User by Id
  */
 exports.getUserDetailsById = async (id) => {
+  const db = getDBReference();
+  var user;
+  user = await db.collection('users').findOne({ _id: new ObjectId(id)});
   console.log(" == getUserDetailsById id", id);
-
-  return "123";
+  delete user.password;
+  return user;
 }
 
 
