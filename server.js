@@ -5,6 +5,7 @@ const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const CustomError = require("./lib/custom-error");
 const {connectToMongo} = require("./lib/mongoDB");
+const logger = require('./lib/logger');
 const api = require('./api');
 
 const app = express();
@@ -17,6 +18,8 @@ const port = process.env.PORT || 8000;
 app.use(morgan('dev'));
 
 app.use(bodyParser.json());
+
+app.use(logger);
 
 /*
  * All routes for the API are written in modules in the api/ directory.  The
@@ -46,3 +49,4 @@ connectToMongo(()=>{
   console.log("== Server is running on port", port);
 });
 })
+
