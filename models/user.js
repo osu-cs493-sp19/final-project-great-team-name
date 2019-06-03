@@ -3,7 +3,9 @@
  * User model and related functions.
  *
  */
-
+const bcrypt = require('bcryptjs');
+const { ObjectId } = require('mongodb');
+const { getDBReference } = require("../lib/mongoDB")
 const { extractValidFields } = require('../lib/validation');
 const CustomError = require("../lib/custom-error");
 
@@ -35,13 +37,19 @@ exports.AuthSchema = AuthSchema;
  */
 exports.insertNewUser = async (user) => {
   console.log(" == insertNewUser: user", user);
-
-  return "123";
+  const userToInsert = extractValidFields(user, UserSchema);
+  const db = getDBReference();
+  const collection = await db.collection('users');
+  const passwordHash = await bcrypt.hash(userToInsert.password, 8);
+  userToInsert.password = passwordHash;
+  const result = await collection.insertOne(userToInsert).insertedId;
+  return result;
 }
 
 
 /*
  * Authenticate a User against the DB.
+ someone else can work on this
  */
 exports.authenticateUser = async (user) => {
   console.log(" == authenticateUser: user", user);
@@ -54,9 +62,12 @@ exports.authenticateUser = async (user) => {
  * Fetch details about a User by Id
  */
 exports.getUserDetailsById = async (id) => {
+  const db = getDBReference();
+  var user;
+  user = await db.collection('users').findOne({ _id: new mongodb.ObjectId(id)});
   console.log(" == getUserDetailsById id", id);
-
-  return "123";
+  delete user.password;
+  return user;
 }
 
 
@@ -64,7 +75,14 @@ exports.getUserDetailsById = async (id) => {
  * Fetch details about a User by Email address
  */
 exports.getUserDetailsByEmail = async (email) => {
-  console.log(" == getUserDetailsByEmail email", email);
+  const db = getDBReference();
 
-  return "1234";
+  // becasue the varialbe name and the object name are the same,
+  //we can just leave it as { email, } thnx es6
+
+   var user;
+   user = await db.collection('users').findOne({email})
+   console.log(" == getUserDetailsByEmail email", email,"\nUser: ",user);
+   delete user.password;
+  return user;
 }

@@ -13,11 +13,11 @@ const {
    UserSchema,
    AuthSchema,
    insertNewUser,
-   authenticateUser,
    getUserDetailsById,
    getUserDetailsByEmail
 } = require('../models/user');
 
+// authenticateUser,
 
 /*
  * Fetches information about a user based on their role
@@ -29,10 +29,11 @@ router.get('/:id', requireAuthentication, async (req, res, next) => {
   try {
 
 
-    const user = await getUserDetailsById(req.params.id);
-    res.status(201).send({});
+    const user = await getUserDetailsByEmail(req.params.id);
+    res.status(201).send(user);
 
   } catch (err) {
+    console.log(err);
     // Throw a 404 for all errors incuding DB issues
     next(new CustomError("User not found.", 404));
   }
@@ -45,7 +46,7 @@ router.get('/:id', requireAuthentication, async (req, res, next) => {
  *
  */
  router.post('/', requireAuthentication, async (req, res, next) => {
-
+    console.log(validateAgainstSchema(req.body, UserSchema));
    if (validateAgainstSchema(req.body, UserSchema)) {
      // Only an Admin can create admin/instructor Users
      if (req.body.role != 'student' && ( !req.user || req.user.role != 'admin'))  {
@@ -58,6 +59,7 @@ router.get('/:id', requireAuthentication, async (req, res, next) => {
           res.status(201).send({id: id});
 
        } catch (err) {
+         console.log(err);
          // Throw a 500 for all errors incuding DB issues
          next(new CustomError("Error adding user.", 500));
        }
