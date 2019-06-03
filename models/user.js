@@ -64,7 +64,7 @@ exports.authenticateUser = async (user) => {
 exports.getUserDetailsById = async (id) => {
   const db = getDBReference();
   var user;
-  user = await db.collection('users').findOne({ _id: new ObjectId(id)});
+  user = await db.collection('users').findOne({ _id: new mongodb.ObjectId(id)});
   console.log(" == getUserDetailsById id", id);
   delete user.password;
   return user;
