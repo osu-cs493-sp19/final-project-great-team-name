@@ -4,10 +4,34 @@
  *
  */
 
-const { extractValidFields } = require('../lib/validation');
-const { getDBReference } = require ('../lib/mongo');
+const { extractValidFields,validateAgainstSchemas} = require('../lib/validation');
+//GRID fs for storing data,
+const { getDBReference, _ID } = require ('../lib/mongoDB');
+const multer = require('multer');
+const {gridFSBucet} = require('mongodb');
 const CustomError = require("../lib/custom-error");
 
+
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: `${__dirname}/uploads`,
+    filename: (req, file, callback) => {
+                  const filename = crypto.pseudoRandomBytes(16).toString('hex');
+                  const extension = imageTypes[file.mimetype];
+                  callback(null, `${filename}.${extension}`);
+                },
+    fileFilter: (req, file, callback) => {
+                  callback(null, !!imageTypes[file.mimetype]);
+                },
+
+  })
+
+});
+// below is the macro for the assigments key value
+const HW = "assignments";
+const TURNIN = "submissions"
+const TURNIN_BLOBS ="sumbmissions-blobs";
 /*
 * Schema describing required/optional fields of a Assignment object.
 */
@@ -25,7 +49,6 @@ exports.AssignmentSchema = AssignmentSchema;
 */
 const SubmissionSchema = {
  assignmentId: { required: true },
- studentId: { required: true },
  timestamp: { required: false }, // This should be calculated?
  file: { required: true }
 };
@@ -34,60 +57,220 @@ exports.SubmissionSchema = SubmissionSchema;
 
 /*
  * Creates a new assignment object in the DB & returns Id
+input:
+{
+	"courseId": 56,
+	"title": "52 card pickup",
+	"points": "100",
+	"due": "tomorrow"
+}
+output:
+{
+    "id": "5cf72986f31af424e2b7dea2"
+}
  */
 exports.insertAssignment = async (assignment) => {
+try{
+  const ass_i = extractValidFields(assignment,AssignmentSchema);
+  const collection = getDBReference().collection(HW);
+  const result = await collection.insertOne(ass_i);
+  console.log(result);
   console.log(" == insertAssignment: assignment", assignment);
-  const db = getDBReference();
-  const collection = db.collection('assignments');
-  const result = await collection.insertOne(assignment);
-  return result.insertId;
+  return result.insertedId;
+}
+catch(e){
+  console.log(e);
+}
 }
 
 
 /*
  * Fetch details about an assignment by Id
+input:
+{
+    "id": "5cf72986f31af424e2b7dea2"
+}
+output:
+{
+    "_id": "5cf72986f31af424e2b7dea2",
+    "courseId": 56,
+    "title": "52 card pickup",
+    "points": "100",
+    "due": "tomorrow"
+}
  */
 exports.getAssignmentDetailsById = async (id) => {
   console.log(" == getAssignmentDetailsById: id", id);
+  const collection = getDBReference().collection(HW);
+  var result = await collection.findOne({ _id: new _ID(id)});
 
-  return {};
+  return result;
 }
 
 
 /*
  * Partial update of an Assignment by Id
- */
-exports.updateAssignment = async (id, assignment) => {
-  console.log(" == updateAssignment: id,assignment", id,assignment);
-
-  return {};
+before:
+{
+    "_id": "5cf72986f31af424e2b7dea2",
+    "courseId": 56,
+    "title": "52 card pickup",
+    "points": "100",
+    "due": "tomorrow"
 }
+input:
+{
+	"due": "not tomorrow"
+}
+output:
+{
+    "lastErrorObject": {
+        "n": 1,
+        "updatedExisting": true
+    },
+    "value": {
+        "_id": "5cf72986f31af424e2b7dea2",
+        "courseId": 56,
+        "title": "52 card pickup",
+        "points": "100",
+        "due": "not tomorrow"
+    },
+    "ok": 1
+}
+after:
+{
+    "_id": "5cf72986f31af424e2b7dea2",
+    "courseId": 56,
+    "title": "52 card pickup",
+    "points": "100",
+    "due": "not tomorrow"
+}
+ */
+async function patchAssignment (id, patch) {
+  console.log(" == updateAssignment: id,assignment", id,assignment);
+try{
+  const collection = getDBReference().collection(HW);
+  var assignment = await collection.findOne({ _id: new _ID(id)});
+  var result=  await collection.findOneAndUpdate(
+    { _id: new _ID(id)},
+    {$set: patch},
+    {returnNewDocument:true},
+  );
+  console.log("==Updated Assignment: ",result);
+  return result;
+}catch(e){
+  console.log(e);
+}
+}
+exports.updateAssignment = patchAssignment
 
 /*
  * Delete an Assignment by Id
+ before:
+ {
+    "_id": "5cf73070e5f9792b1299bace",
+    "courseId": 56,
+    "title": "52 card pickup said no one ever",
+    "points": "100",
+    "due": "soon"
+}
+input:
+{
+   "id": "5cf73070e5f9792b1299bace"
+ }
+ output:
+{} 204 noContent
+after:
+GET
  */
 exports.deleteAssignment = async (id) => {
-  console.log(" == deleteAssignment: id", id);
-
-  return {};
+  const collection = getDBReference().collection(HW);
+  var result;
+  try{
+    // var assignment = await collection.findOne({ _id: new _ID(id)});
+    result = await collection.remove(
+      { _id: new _ID(id) },
+      { justOne: true},
+    );
+    console.log(` == deleteAssignment: id:${id} result: ${result.result} `);
+  }
+  catch(e){
+    console.log(e);
+  }
+  if(result.result.n>0){
+    return result.result;
+  }
+  else{
+    throw new CustomError("no record on file", 404);
+  }
 }
 
 
 /*
  * Fetch paginated list of submissions by Assignment Id
+
+This fetches meta data about a submisttion
  */
 exports.getAssignmentSubmissions = async (id, studentId, page) => {
-  console.log(" == getAssignmentSubmissions: id,studentId,page", id,studentId,page);
+  const PAGE_SIZE = 10;
+  const collection = getDBReference().collection(TURNIN);
+  const query = { assignmentId: id};
+  var results;
 
+  if(page==1 || !page){
+     results = db.collection.find(query).limit(PAGE_SIZE);
+  }
+  else{
+     results =  db.users.find(query).skip(page*PAGE_SIZE).limit(PAGE_SIZE);
+   }
+  console.log(" == getAssignmentSubmissions: id,studentId,page", id,studentId,page);
   return {};
 }
 
 
 /*
  * Insert a new submission for an Assignment
- */
-exports.insertSubmission = async (id, submission) => {
-  console.log(" == insertSubmission: id, submission", id, submission);
+Requirements for API
+one Function paramter: req
+req = {
+  body,
+  params,
+  file
+}
+{params, body, file}
+input:
+{
+	"assignmentId": "5cf72986f31af424e2b7dea2" ,
+	"file": "i wrote this at 2am hahah"
+}
+output:
+{
+    "id": "5cf735a5f81a412f8687e458"
+}
+*/
+exports.insertSubmission = async (submission) => {
+  console.log(" == insertSubmission: id, submission", submission);
+  var result;
+  try{
+      const sub_i = extractValidFields(submission,SubmissionSchema);
+      sub_i.timestamp = new Date().toString();
+      const collection = getDBReference().collection(TURNIN);
+      result = await collection.insertOne(sub_i);
+      return result.insertedId;
+  }
+  catch(e){
+    console.log(e);
+  }
 
-  return {};
+  // var bucket = new gridFSBucket(getDBReference(),{bucketName: TURNIN_BLOBS})
+  // const metadata = {
+  //   contentType: 'application/pdf'
+  //   student: body.studentId,
+  //   assignemnt: body.assignmentId,
+  // };
+  //
+  // var uploadstream = bucket.openUploadStream(
+  //   file.filename,
+  //  { metadata: metadata });
+
 }
