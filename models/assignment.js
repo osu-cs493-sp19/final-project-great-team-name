@@ -32,6 +32,9 @@ const upload = multer({
 const HW = "assignments";
 const TURNIN = "submissions"
 const TURNIN_BLOBS ="sumbmissions-blobs";
+
+
+
 /*
 * Schema describing required/optional fields of a Assignment object.
 */
@@ -208,36 +211,90 @@ exports.deleteAssignment = async (id) => {
 
 /*
  * Fetch paginated list of submissions by Assignment Id
+ input:
+ -------Page 1 ---
+/assignments/5cf72986f31af424e2b7dea2/submissions
+{
+  assignemntid: 5cf72986f31af424e2b7dea2
+  page: n/a
+}
+ output:
+ [
+    {
+        "_id": "5cf73591f81a412f8687e449",
+        .
+        .
+        "timestamp": "Tue Jun 04 2019 20:22:57 GMT-0700 (Pacific Daylight Time)"
+    },
+    {
+        "_id": "5cf7359af81a412f8687e44a",
+        .
+        .
+        "timestamp": "Tue Jun 04 2019 20:23:06 GMT-0700 (Pacific Daylight Time)"
+    },
+input:
+-------Page 2---
+/assignments/5cf72986f31af424e2b7dea2/submissions?page=2
+{
+  assignemntid: 5cf72986f31af424e2b7dea2
+  page: 2
+}
+output:
+[
+    {
+        "_id": "5cf7359df81a412f8687e44f",
+        .
+        .
+        "timestamp": "Tue Jun 04 2019 20:23:09 GMT-0700 (Pacific Daylight Time)"
+    },
+    {
+        "_id": "5cf7359df81a412f8687e450",
+        .
+        .
+        "timestamp": "Tue Jun 04 2019 20:23:09 GMT-0700 (Pacific Daylight Time)"
+    },
 
 This fetches meta data about a submisttion
  */
 exports.getAssignmentSubmissions = async (id, studentId, page) => {
-  const PAGE_SIZE = 10;
+  const PAGE_SIZE = 3;
   const collection = getDBReference().collection(TURNIN);
   const query = { assignmentId: id};
   var results;
 
   if(page==1 || !page){
-     results = db.collection.find(query).limit(PAGE_SIZE);
+     results = await collection.find(query).limit(PAGE_SIZE).toArray();
   }
   else{
-     results =  db.users.find(query).skip(page*PAGE_SIZE).limit(PAGE_SIZE);
+     results =  await collection.find(query).skip(page*PAGE_SIZE).limit(PAGE_SIZE).toArray();
    }
   console.log(" == getAssignmentSubmissions: id,studentId,page", id,studentId,page);
-  return {};
+  console.log("Page: ", results);
+  // console.log(results);
+  return results
 }
 
 
 /*
  * Insert a new submission for an Assignment
 Requirements for API
-one Function paramter: req
-req = {
-  body,
-  params,
-  file
-}
-{params, body, file}
+ARGUMENTS
+
+for file.propTypes.string.isRequired option
+  one function parameter: submission
+    submission = {
+     ...SubmissionSchema
+  }
+for the multer stragety
+      one Function paramter: req
+      req = {
+        body,
+        params,
+        file
+      }
+      {params, body, file}
+
+UNIT TESTING
 input:
 {
 	"assignmentId": "5cf72986f31af424e2b7dea2" ,
@@ -261,6 +318,7 @@ exports.insertSubmission = async (submission) => {
   catch(e){
     console.log(e);
   }
+}
 
   // var bucket = new gridFSBucket(getDBReference(),{bucketName: TURNIN_BLOBS})
   // const metadata = {
@@ -272,5 +330,3 @@ exports.insertSubmission = async (submission) => {
   // var uploadstream = bucket.openUploadStream(
   //   file.filename,
   //  { metadata: metadata });
-
-}
