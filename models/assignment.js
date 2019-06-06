@@ -259,8 +259,15 @@ This fetches meta data about a submisttion
 exports.getAssignmentSubmissions = async (id, studentId, page) => {
   const PAGE_SIZE = 3;
   const collection = getDBReference().collection(TURNIN);
-  const query = { assignmentId: id};
+  var query;
   var results;
+
+  if(studentId){
+    query = { $and: [ {studentId: studentId}, {assignmentId: id } ] };
+  }
+  else{
+    query = {assignmentId: id};
+  }
 
   if(page==1 || !page){
      results = await collection.find(query).limit(PAGE_SIZE).toArray();

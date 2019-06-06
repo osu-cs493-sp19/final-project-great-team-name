@@ -94,8 +94,8 @@ router.patch('/:id', requireAuthentication, requireCourseInstructorOrAdmin, asyn
  //if (validateAgainstSchema(req.body, AssignmentSchema)) {
    try {
 
-      const id = await updateAssignment(req.params.id, req.body);
-      res.status(200).send(id);
+      const assignment = await updateAssignment(req.params.id, req.body);
+      res.status(200).send(assignment);
 
    } catch (err) {
      // Throw a 404 for all errors incuding DB issues
