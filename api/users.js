@@ -13,9 +13,9 @@ const {
    UserSchema,
    AuthSchema,
    insertNewUser,
+   authenticateUser,
    getUserDetailsById,
    getUserDetailsByEmail
-   authenticateUser,
 } = require('../models/user');
 
 
@@ -29,7 +29,7 @@ router.get('/:id', requireAuthentication, async (req, res, next) => {
   try {
 
 
-    const user = await getUserDetailsByEmail(req.params.id);
+    const user = await getUserDetailsById(req.params.id);
     res.status(201).send(user);
 
   } catch (err) {
