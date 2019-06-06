@@ -25,6 +25,23 @@ const {
   insertSubmission
 } = require('../models/assignment');
 
+const crypto = require('crypto');
+const multer = require('multer');
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: `${__dirname}/uploads`,
+    filename: (req, file, callback) => {
+                  const ext= crypto.pseudoRandomBytes(8).toString('hex');
+                  callback(null, `${req.body.title}${ext}.pdf`);
+                },
+    fileFilter: (req, file, callback) => {
+                  callback(null, true);
+                },
+
+  })
+
+});
 
 /*
  * Creates a new assignment.
@@ -55,7 +72,7 @@ router.post('/', requireAuthentication, requireCourseInstructorOrAdmin, async (r
  */
 router.get('/:id', async (req, res, next) => {
    try {
-      const assignment = getAssignmentDetailsById(req.params.id);
+      const assignment = await getAssignmentDetailsById(req.params.id);
 
       res.status(201).send(assignment);
 
@@ -77,8 +94,8 @@ router.patch('/:id', requireAuthentication, requireCourseInstructorOrAdmin, asyn
  //if (validateAgainstSchema(req.body, AssignmentSchema)) {
    try {
 
-      const id = await updateAssignment(req.params.id, req.body);
-      res.status(200).send({});
+      const assignment = await updateAssignment(req.params.id, req.body);
+      res.status(200).send(assignment);
 
    } catch (err) {
      // Throw a 404 for all errors incuding DB issues
@@ -102,7 +119,7 @@ router.delete('/:id', requireAuthentication, requireCourseInstructorOrAdmin, asy
    try {
 
       const id = await deleteAssignment(req.params.id);
-      res.status(204).send({});
+      res.status(204).send(id);
 
    } catch (err) {
      // Throw a 404 for all errors incuding DB issues
@@ -122,12 +139,13 @@ router.get('/:id/submissions', requireAuthentication, requireCourseInstructorOrA
    try {
      // Extract paramenters
      const studentId = req.query.studentId;
-     const page = parseInt(req.query.page);
+     const page = parseInt(req.query.page) || 1;
      const submissions = await getAssignmentSubmissions(req.params.id, studentId, page);
 
-     res.status(200).send(submissions);
+     res.status(200).json(submissions);
 
    } catch (err) {
+     console.log(err);
      // Throw a 404 for all errors incuding DB issues
      next(new CustomError("Assignment not found.", 404));
    }
@@ -138,14 +156,12 @@ router.get('/:id/submissions', requireAuthentication, requireCourseInstructorOrA
  * Create a new submission for an assignment.
  * requireAuthentication  - Need a valid token
  * requireEnrolledStudent - Student must be enrolled in course
- *
+ * upload.single('pdf')
  */
 router.post('/:id/submissions', requireAuthentication, requireEnrolledStudent, async (req, res, next) => {
-  if (validateAgainstSchema(req.body, SubmissionSchema)) {
+  if (validateAgainstSchema(req.body, SubmissionSchema) && req.params.id === req.body.assignmentId) {
     try {
-
-      const id = await insertSubmission(req.params.id, req.body);
-
+      const id = await insertSubmission(req.body);
       res.status(201).send({id: id});
 
     } catch (err) {
