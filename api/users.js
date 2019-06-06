@@ -15,9 +15,9 @@ const {
    insertNewUser,
    getUserDetailsById,
    getUserDetailsByEmail
+   authenticateUser,
 } = require('../models/user');
 
-// authenticateUser,
 
 /*
  * Fetches information about a user based on their role
