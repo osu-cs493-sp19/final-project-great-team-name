@@ -8,8 +8,11 @@
 const { extractValidFields } = require('../lib/validation');
 const CustomError = require("../lib/custom-error");
 
+
+const { getDBReference, _ID } = require ('../lib/mongoDB');
+
 //
-// NOTE: I still need to test the functions that are written
+// NOTE: Still need to do the two roster functions and then test my changes
 //
 
 /*
@@ -20,11 +23,13 @@ const CourseSchema = {
  number: { required: true },
  title: { required: true },
  term: { required: true },
- instructorId: { required: true }
+ instructorId: { required: true },
+ students: {required: false}
  // list of students
  // list of assignments
 };
 exports.CourseSchema = CourseSchema;
+
 
 /*
  * Schema describing required/optional fields for a Course roster update.
@@ -35,34 +40,77 @@ const RosterSchema = {
 };
 exports.RosterSchema = RosterSchema;
 
+// Variable to control page size
+const PAGE_SIZE = 3;
+
 
 /*
  * Fetch paginated list of courses
  * Do not return students or assignments/submissions.
  */
 exports.getCourses = async (page, subject, number, term) => {
-  console.log(" == getCourses: page,subject,number,term", page,subject,number,term);
-  const db = getDBReference();
-  const collection = db.collection('courses');
-  const courseCount = await collection.countDocuments();
-  const numPerPage = 5;
-  const lastPage = Math.ceil(courseCount / numPerPage);
-  page = page < 1 ? 1 : page;
-  page = page > lastPage ? lastPage : page;
-  const offset = (page - 1) * numPerPage;
-  const results = await collection.find({})
-    .sort({_id: 1})
-    .skip(offset)
-    .limit(numPerPage)
-    .toArray();
+  try
+  {
+    console.log(" == getCourses: page,subject,number,term", page,subject,number,term);
+    const collection = getDBReference().collection('courses');
+    const courseCount = await collection.find({ $and: [ {subject: subject}, {number: number}, {term: term}]}).countDocuments();
+    const PAGE_SIZE = 5;
+    const lastPage = Math.ceil(courseCount / PAGE_SIZE);
+    page = page < 1 ? 1 : page;
+    page = page > lastPage ? lastPage : page;
+    const offset = (page - 1) * PAGE_SIZE;
+    const results = await collection.find({ $and: [ {subject: subject}, {number: number}, {term: term}]})
+      .sort({_id: 1})
+      .skip(offset)
+      .limit(PAGE_SIZE)
+      .toArray();
+  
+    return {
+      courses: results,
+      page: page,
+      totalPages: lastPage,
+      pageSize: PAGE_SIZE,
+      count: count
+    };
+  }
+  catch(err)
+  {
+    console.log(" !!! Error in /models/courses.js  :  getCourses()");
+    console.log(err);
+  }
 
-  return {
-    courses: results,
-    page: page,
-    totalPages: lastPage,
-    pageSize: numPerPage,
-    count: count
-  };
+};
+
+exports.getAllCourses = async (page) => {
+  console.log(" == Getting All Courses");
+  try
+  {
+    console.log(" == getCourses: page,subject,number,term", page,subject,number,term);
+    const collection = getDBReference().collection('courses');
+    const courseCount = await collection.countDocuments();
+    const lastPage = Math.ceil(courseCount / PAGE_SIZE);
+    page = page < 1 ? 1 : page;
+    page = page > lastPage ? lastPage : page;
+    const offset = (page - 1) * PAGE_SIZE;
+    const results = await collection.find({})
+      .sort({_id: 1})
+      .skip(offset)
+      .limit(PAGE_SIZE)
+      .toArray();
+  
+    return {
+      courses: results,
+      page: page,
+      totalPages: lastPage,
+      pageSize: PAGE_SIZE,
+      count: count
+    };
+  }
+  catch(err)
+  {
+    console.log(" !!! Error in /models/courses.js  :  getAllCourses()");
+    console.log(err);
+  }
 };
 
 
@@ -70,11 +118,22 @@ exports.getCourses = async (page, subject, number, term) => {
  * Insert a new course into the DB
  */
 exports.insertCourse = async (course) => {
-  console.log(" == insertCourse: course", course);
-  const db = getDBReference();
-  const collection = db.collection('courses');
-  const result = await collection.insertOne(course);
-  return result.insertedId;
+  try
+  {
+    console.log(" == Inserting Course:", course);
+    const courseFields = extractValidFields(course, CourseSchema);
+    const collection = getDBReference().collection('courses');
+    const result = await collection.insertOne(courseFields);
+    console.log(result);
+    console.log(" == Course Inserted With ID: ", result.insertedId);
+    return result.insertedId;
+  }
+  catch(err)
+  {
+    console.log(" !!! Error in /models/courses.js  :  insertCourse()");
+    console.log(err);
+  }
+  
 };
 
 
@@ -82,39 +141,43 @@ exports.insertCourse = async (course) => {
  * Fetch details about a course by Id
  */
 exports.getCourseDetailsById = async (id) => {
-  console.log(" == getCourseDetailsById: id", id);
-  const db = getDBReference();
-  const collection = db.collection('courses');
-  const results = await collection.find({id}).toArray();
-  return results[0];
+  try
+  {
+    console.log(" == Getting Course Details By ID: ", id);
+    const collection = getDBReference().collection('courses');
+    var result = await collection.findOne({ _id: new _ID(id)});
+    return result;
+  }
+  catch(err)
+  {
+    console.log(" !!! Error in /models/courses.js  :  getCourseDetailsById()");
+    console.log(err);
+  }
 };
 
 
 /*
  * Perform partial update of a Course by Id
  */
-exports.updateCourse = async (id, course) => {
-  console.log(" == updateCourse: course", course);
-  return new Promise((resolve, reject) => {
-    const db = getDBReference();
-    db.collection('courses', function(err, collection) {
-      collection.updateOne({_id: new mongodb.ObjectID(id)}, {
-        subject: course.subject,
-        number: course.number,
-        title: course.title,
-        term: course.term,
-        instructorId: course.insertedId
-      }), function(err, results) {
-        if(err)
-        {
-          console.log(err);
-          reject(err);
-        }
-        console.log("Successfully deleted course id: "+id);
-        resolve(results);
-      }
-    });
-  });
+exports.updateCourse = async (id, patch) => {
+  try
+  {
+    console.log(" == Updating Course ID: ", id);
+    const collection = getDBReference.collection('courses');
+    var result = await collection.findOneAndUpdate(
+      { _id: new _ID(id)},
+      {$set: patch},
+      {returnNewDocument:true},
+    );
+    console.log(" == Updated Course:", result);
+    return result;
+  }
+  catch(err)
+  {
+    console.log(" !!! Error in /models/courses.js  :  updateCourse()");
+    console.log(err);
+  }
+
 };
 
 
@@ -122,22 +185,29 @@ exports.updateCourse = async (id, course) => {
  * Delete a Course by Id
  */
 exports.deleteCourse = async (id) => {
-  console.log(" == deleteCourse: id", id);
-  return new Promise((resolve, reject) =>{
-    const db = getDBReference();
-    db.collection('courses', function(err, collection) {
-      collection.deleteOne({_id: new mongodb.ObjectID(id)}), function(err, results) {
-        if(err)
-        {
-          console.log(err);
-          reject(err);
-        }
-        console.log("Successfully deleted course id: "+id);
-        resolve(results);
-      }
-    });
-  });
-  
+  try
+  {
+    console.log(" == Deleting Course ID: ", id);
+    const collection = getDBReference().collection('courses');
+    var result = await collection.remove(
+      { _id: new _ID(id)},
+      { justOne: true},
+    );
+    console.log(" == Deleted Assignment ID: ${id}, Result:${result.result}");
+    if(result.result.n > 0)
+    {
+      return result.result;
+    }
+    else
+    {
+      console.log(" !!! Error in /models/courses.js  :  deleteCourse()");
+      throw new CustomError("Delete Course Error, No Record For Course ID:${id}", 404);
+    }
+  }
+  catch(err)
+  {
+    console.log(err);
+  }
 };
 
 
@@ -155,38 +225,55 @@ exports.getCourseRoster = async (course) => {
  * Add/Remove students from the Course roster by Id
  */
 exports.updateCourseRoster = async (course, updates) => {
-  console.log(" == updateCourseRoster: course, updates", course, updates);
-
-  return true;
+  try
+  {
+    console.log(" == Updating Roster For Course ID:${course.id}", updates);
+    //this.addStudentToCourse();
+    //this.removeStudentFromCourse();
+  }
+  catch(err)
+  {
+    console.log(" !!! Error in /models/courses.js  :  updateCourseRoster()");
+    console.log(err);
+  }
 };
 
 
 /*
  * Fetch assignments for the Course by Id
  */
-exports.getCourseAssignments = async (course) => {
-  console.log(" == getCourseAssignments: course", course);
-  const db = getDBReference();
-  const collection = db.collection('assignments');
-  const assignmentCount = await collection.find({courseId: course.id}).countDocuments();
-  const numPerPage = 5;
-  const lastPage = Math.ceil(assignmentCount / numPerPage);
-  page = page < 1 ? 1 : page;
-  page = page > lastPage ? lastPage : page;
-  const offset = (page - 1) * numPerPage;
-  const results = await collection.find({courseId: course.id})
-    .sort({_id: 1})
-    .skip(offset)
-    .limit(numPerPage)
-    .toArray();
+exports.getCourseAssignments = async (id, page) => {
 
-  return {
-    assignments: results,
-    page: page,
-    totalPages: lastPage,
-    pageSize: numPerPage,
-    count: count
-  };
+  try
+  {
+    console.log(" == Getting Assignments For Course ID:", id);
+    const collection = getDBReference().collection('assignments');
+    const assignmentCount = await collection.find({courseId: course.id}).countDocuments();
+    console.log(" == Reading ${assignmentCount} Assignments for Course ID: ", id);
+    const lastPage = Math.ceil(assignmentCount / PAGE_SIZE);
+    page = page < 1 ? 1 : page;
+    page = page > lastPage ? lastPage : page;
+    const offset = (page - 1) * PAGE_SIZE;
+    const results = await collection.find({courseId: new _ID(course.id)})
+      .sort({_id: 1})
+      .skip(offset)
+      .limit(PAGE_SIZE)
+      .toArray();
+  
+    return {
+      assignments: results,
+      page: page,
+      totalPages: lastPage,
+      pageSize: PAGE_SIZE,
+      count: count
+    };
+
+  }
+  catch(err)
+  {
+    console.log(" !!! Error in /models/courses.js  :  getCourseAssignments()");
+    console.log(err);
+  }
 };
 
 
@@ -194,16 +281,66 @@ exports.getCourseAssignments = async (course) => {
  * Check if an instructor owns the specified Course Id
  */
 exports.instructorOwnsCourse = async (instructor, course) => {
-  console.log(" == instructorOwnsCourse: instructor, course", instructor, course);
-  return new Promise((resolve, reject) => {
-    const db = getDBReference();
-    const collection = db.collection('courses');
-    const results = await collection.find({iinstructorId: instructor.id}).toArray();
+  try
+  {
+    console.log(" == Checking if Instructor ID:${instructor.id} owns Course ID: ${course.id}");
+    const collection = getDBReference().collection('courses');
+    const results = await collection.find(
+      {
+        $and: 
+        [
+          { _id: new _ID(course.id)}, 
+          {instructorId: new _ID(instructor.id)}
+        ]
+      }).toArray();
     if(results.length == 0)
-      reject();
-    resolve (results[0]);
-  });
+    {
+      return false;
+    }
+    else
+    {
+      return true;
+    }
+  }
+  catch(err)
+  {
+    console.log(" !!! Error in /models/courses.js  :  instructorOwnsCourse()");
+    console.log(err);
+  }
 };
+
+/*
+ * Check if an instructor owns the specified Course Id
+ */
+exports.instructorIdOwnsCourseId = async (instructorId, courseId) => {
+  try
+  {
+    console.log(" == Checking if Instructor ID:${instructor.id} owns Course ID: ${course.id}");
+    const collection = getDBReference().collection('courses');
+    const results = await collection.find(
+      {
+        $and:[
+          { instructorId: new _ID(instructorId)},
+          { _id: new _ID(courseId)}
+        ]
+      }).toArray();
+    if(results.length == 0)
+    {
+      return false;
+    }
+    else
+    {
+      return true;
+    }
+  }
+  catch(err)
+  {
+    console.log(" !!! Error in /models/courses.js  :  instructorIdOwnsCourseId()");
+    console.log(err);
+  }
+};
+
+
 
 
 /*
@@ -212,9 +349,125 @@ exports.instructorOwnsCourse = async (instructor, course) => {
 
  // I think we are going to need to store students enrolled in a course
  // in the courses collection as an array of id's or something
-exports.studentInCourse = async (student, course) => {
-  console.log(" == studentInCourse: student, course", student, course);
-  return new Promise((resolve, reject) => {
-    // Need to make a solution for searching students first.
-  });
+exports.studentInCourse = async (user, course) => {
+  try
+  {
+    console.log(" == Checking if Student ID:${user.id} is Enrolled In Course ID:${course.id}");
+    const collection = getDBReference().collection('courses');
+    const course = await collection.findOne({ _id: new _ID(course.id)});
+    var i;
+    var students = course.students;
+    for(i = 0; i < students.length; i++)
+    {
+      if(students[i] == user.id)
+        foundStudent = true;
+    }
+    return foundStudent;
+  }
+  catch(err)
+  {
+    console.log(" !!! Error in /models/courses.js  :  studentInCourse()");
+    console.log(err);
+  }
+};
+
+
+exports.studentIdInCourseId = async (studentId, courseId) => {
+  try
+  {
+    console.log(" == Checking if Student ID:${studentId} is Enrolled In Course ID:${courseId}");
+    const collection = getDBReference().collection('courses');
+    const course = await collection.findOne({ _id: new _ID(courseId)});
+    var i;
+    var students = course.students;
+    for(i = 0; i < students.length; i++)
+    {
+      if(students[i] == studentId)
+        foundStudent = true;
+    }
+    return foundStudent;
+  }
+  catch(err)
+  {
+    console.log(" !!! Error in /models/courses.js  :  studentIdInCourseId()");
+    console.log(err);
+  }
+};
+
+
+exports.addStudentToCourse = async (studentId, courseId) => {
+  try
+  {
+    console.log(" == Adding Student ID:${user.id} to Course ID:${courseId}");
+    var studentInClass = await this.studentIdInCourseId(studentId, courseId);
+    if(studentInClass)
+    {
+      console.log("Add Student To Course Failure, Student ID:${studentId} is Already Enrolled In Course ID:${courseId}");
+      return false;
+    }
+    const collection = getDBReference().collection('courses');
+    const course = await collection.findOne({ _id: new _ID(courseId)});
+    var students = course.students;
+    if(students)
+    {
+      students.push(studentId);
+    }
+    else
+    {
+      students = [];
+      students.push(studentId);
+    }
+    var updatedCourse = await collection.findOneAndUpdate(
+      { _id: new _ID(courseId)},
+      {students: students},
+      {returnNewDocument: true}
+    );
+    
+    console.log(" == Added Student ID:${studentId} to Course ID:${courseId}");
+    return updatedCourse;
+
+    
+  }
+  catch(err)
+  {
+    console.log(" !!! Error in /models/courses.js  :  addStudentToCourse()");
+    console.log(err);
+  }
+};
+
+
+exports.removeStudentFromCourse = async (studentId, courseId) => {
+  try
+  {
+    console.log(" == Removing Student ID:${studentId} from Course ID:${courseId}");
+    var studentInCourse = await this.studentIdInCourseId(studentId, courseId);
+    if(studentInCourse == false)
+    {
+      console.log("Remove Student From Course Failure, Student ID:${studentId} is Already Enrolled In Course ID:${courseId}");
+      return false;
+    }
+    const collection = getDBReference().collection('courses');
+    const course = await collection.findOne({ _id: new _ID(courseId)});
+    var i;
+    var newStudents = [];
+    var students = course.students;  
+    for(i = 0; i < students.length; i++)
+    {
+      if(students[i] != studentId)
+        newStudents.push(students[i]);
+    }
+    var updatedCourse = await collection.findOneAndUpdate(
+      { _id: new _ID(courseId)},
+      {students: newStudents},
+      {returnNewDocument: true}
+    );
+    console.log(" == Removed Student ID:${studentId} to Course ID:${courseId}");
+    return updatedCourse;
+
+  }
+  catch(err)
+  {
+    console.log(" !!! Error in /models/courses.js  :  removeStudentFromCourse()");
+    console.log(err);
+  }
 };
