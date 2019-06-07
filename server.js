@@ -2,7 +2,7 @@ const express = require('express');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const CustomError = require("./lib/custom-error");
-const { connectToDB } = require ('./lib/mongo');
+const { connectToMongo } = require ('./lib/mongo');
 
 const logger = require('./lib/logger');
 
@@ -46,7 +46,7 @@ app.use('*', function (req, res, next) {
   });
 });
 
-connectToDB(() => 
+connectToMongo(() => 
 {
   app.listen(port, function() 
   {

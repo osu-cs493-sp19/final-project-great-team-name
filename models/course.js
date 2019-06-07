@@ -9,7 +9,7 @@ const { extractValidFields } = require('../lib/validation');
 const CustomError = require("../lib/custom-error");
 
 
-const { getDBReference, _ID } = require ('../lib/mongoDB');
+const { getDBReference, _ID } = require ('../lib/mongo');
 
 //
 // NOTE: Still need to do the two roster functions and then test my changes
