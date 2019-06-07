@@ -24,7 +24,6 @@ app.use(bodyParser.json());
 app.use(logger);
 
 //Rate Limit
-console.log("ratelimit");
 app.use(rateLimit);
 
 
