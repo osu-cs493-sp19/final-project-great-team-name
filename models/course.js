@@ -214,22 +214,48 @@ exports.deleteCourse = async (id) => {
 /*
  * Fetch the student roster of a course by Id
  */
-exports.getCourseRoster = async (course) => {
-  console.log(" == getCourseRoster: course", course);
-
-  return {};
+exports.getCourseRoster = async (courseId) => {
+  try
+  {
+    console.log(" == Fetching Roster For Course ID:${course.id}");
+    const collection = getDBReference().collection('courses');
+    const course = await collection.findOne({ _id: new _ID(courseId)});
+    var i;
+    var students = course.students;
+    var userObjects = [];
+    for(i = 0; i < students.length; i++)
+    {
+      var myUser = getUserDetailsById(students[i]);
+      userObjects.push(myUser);
+    }
+    
+  }
+  catch(err)
+  {
+    console.log(" !!! Error in /models/courses.js  :  getCourseRoster()");
+    console.log(err);
+  }
 };
 
 
 /*
  * Add/Remove students from the Course roster by Id
  */
-exports.updateCourseRoster = async (course, updates) => {
+exports.updateCourseRoster = async (courseId, roster) => {
   try
   {
-    console.log(" == Updating Roster For Course ID:${course.id}", updates);
-    //this.addStudentToCourse();
-    //this.removeStudentFromCourse();
+    console.log(" == Updating Roster For Course ID:${course.id}", roster);
+    const addStudents = roster.add;
+    const remStudents = roster.remove;
+    var i;
+    for(i = 0; i < addStudents.length; i++)
+    {
+      await this.addStudentToCourse(addStudents[i], courseId);
+    }
+    for(i = 0; i < remStudents.length; i++)
+    {
+      await this.removeStudentFromCourse(remStudents[i], courseId);
+    }
   }
   catch(err)
   {
