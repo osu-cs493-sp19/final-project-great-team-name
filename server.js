@@ -2,7 +2,7 @@ const express = require('express');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const CustomError = require("./lib/custom-error");
-const { connectToMongo } = require ('./lib/mongo');
+const { connectToMongo } = require ('./lib/mongoDB');
 
 const logger = require('./lib/logger');
 

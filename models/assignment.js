@@ -5,7 +5,7 @@
  */
 
 const { extractValidFields } = require('../lib/validation');
-const { getDBReference } = require ('../lib/mongo');
+const { getDBReference } = require ('../lib/mongoDB');
 const CustomError = require("../lib/custom-error");
 
 /*
