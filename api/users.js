@@ -39,7 +39,7 @@ router.get('/:id', requireAuthentication, async (req, res, next) => {
     }
     // If Student, fetch the list of Courses they are enrolled in
     if (user.role == 'student') {
-      user.courses = {};    
+      user.courses = {};
     }
 
     res.status(201).send(user);
@@ -94,16 +94,9 @@ router.post('/login', async (req, res, next) => {
 
       if (auth) {
         // Fetch additional data about user to include in token
-        //const user = await getUserDetailsByEmail(req.body.email);
-
-        // Static data for testing
-        var user = {};
-        user.id = "17";
-        user.email = "user@example.com";
-        user.role = 'admin';
-        user.name = "Admin User";
-        user.password = "adminPassword";
-
+        const user = await getUserDetailsByEmail(req.body.email);
+        delete user.password;
+         
         const token = generateAuthToken(user);
 
         res.status(200).send({ token: token });
