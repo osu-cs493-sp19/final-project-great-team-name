@@ -15,7 +15,7 @@ const CustomError = require("../lib/custom-error");
 
 const upload = multer({
   storage: multer.diskStorage({
-    destination: `${__dirname}/uploads`,
+    destination: `${__dirname}/../api/uploads`,
     filename: (req, file, callback) => {
                   const filename = crypto.pseudoRandomBytes(16).toString('hex');
                   const extension = imageTypes[file.mimetype];
@@ -320,7 +320,7 @@ exports.insertSubmission = async (submission) => {
       sub_i.timestamp = new Date().toString();
       const collection = getDBReference().collection(TURNIN);
       result = await collection.insertOne(sub_i);
-      return result.insertedId;
+      return result;
   }
   catch(e){
     console.log(e);
