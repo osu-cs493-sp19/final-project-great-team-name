@@ -53,8 +53,9 @@ exports.insertNewUser = async (user) => {
  */
 exports.authenticateUser = async (user) => {
   console.log(" == authenticateUser: user", user);
-
-  return true;
+  const checkUser = await getUserDetailsById(user.id);
+  const authenticated = user && await bcrypt.compare(user.password, checkUser.password)
+  return authenticated;
 }
 
 
