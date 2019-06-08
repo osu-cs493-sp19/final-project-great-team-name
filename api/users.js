@@ -28,8 +28,20 @@ router.get('/:id', requireAuthentication, async (req, res, next) => {
 
   try {
 
-
     const user = await getUserDetailsById(req.params.id);
+
+    // Remove sensitive information
+    delete user.password;
+
+    // If Instructor, fetch the list of Courses they teach
+    if (user.role == 'instructor') {
+      user.courses = {};
+    }
+    // If Student, fetch the list of Courses they are enrolled in
+    if (user.role == 'student') {
+      user.courses = {};
+    }
+
     res.status(201).send(user);
 
   } catch (err) {
@@ -82,16 +94,9 @@ router.post('/login', async (req, res, next) => {
 
       if (auth) {
         // Fetch additional data about user to include in token
-        //const user = await getUserDetailsByEmail(req.body.email);
-
-        // Static data for testing
-        var user = {};
-        user.id = "17";
-        user.email = "user@example.com";
-        user.role = 'admin';
-        user.name = "Admin User";
-        user.password = "adminPassword";
-
+        const user = await getUserDetailsByEmail(req.body.email);
+        delete user.password;
+         
         const token = generateAuthToken(user);
 
         res.status(200).send({ token: token });
