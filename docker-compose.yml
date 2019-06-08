@@ -23,7 +23,7 @@ services:
     restart: always
     volumes:
       - mongo-data:/data/db
-      - ./lib/dump/:/docker-entrypoint-initdb.d
+      - ./db-init/:/docker-entrypoint-initdb.d
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
