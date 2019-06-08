@@ -90,6 +90,7 @@ router.post('/login', async (req, res, next) => {
         user.email = "user@example.com";
         user.role = 'admin';
         user.name = "Admin User";
+        user.password = "adminPassword";
 
         const token = generateAuthToken(user);
 
