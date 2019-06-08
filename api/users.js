@@ -28,8 +28,20 @@ router.get('/:id', requireAuthentication, async (req, res, next) => {
 
   try {
 
-
     const user = await getUserDetailsById(req.params.id);
+
+    // Remove sensitive information
+    delete user.password;
+
+    // If Instructor, fetch the list of Courses they teach
+    if (user.role == 'instructor') {
+      user.courses = {};
+    }
+    // If Student, fetch the list of Courses they are enrolled in
+    if (user.role == 'student') {
+      user.courses = {};    
+    }
+
     res.status(201).send(user);
 
   } catch (err) {
