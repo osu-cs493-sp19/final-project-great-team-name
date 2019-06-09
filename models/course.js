@@ -106,7 +106,7 @@ exports.getAllCourses = async (page) => {
   console.log(` == Getting All Courses`);
   try
   {
-    console.log(` == getCourses: ${page}, ${subject}, ${number}, ${term}`);
+    console.log(` == getAllCourses:`);
     const collection = getDBReference().collection('courses');
     const courseCount = await collection.countDocuments();
     const lastPage = Math.ceil(courseCount / PAGE_SIZE);
