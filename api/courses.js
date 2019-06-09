@@ -65,7 +65,7 @@ router.get('/', async (req, res, next) => {
  *
  */
 router.post('/', /*requireAuthentication, requireAdmin,*/ async (req, res, next) => {
- if (validateAgainstSchema(req.body, CourseSchema)) {
+ //if (validateAgainstSchema(req.body, CourseSchema)) {
    try {
 
      const id = await insertCourse(req.body);
@@ -76,9 +76,9 @@ router.post('/', /*requireAuthentication, requireAdmin,*/ async (req, res, next)
      // Throw a 500 for all errors incuding DB issues
      next(new CustomError("Error adding course.", 500));
    }
- } else {
-  next(new CustomError("Request is not Valid", 400));
- }
+ //} else {
+ // next(new CustomError("Request is not Valid", 400));
+ //}
 });
 
 
@@ -172,7 +172,7 @@ router.get('/:id/students', /*requireAuthentication, requireCourseInstructorOrAd
  *
  */
 router.post('/:id/students', /*requireAuthentication, requireCourseInstructorOrAdmin,*/ async (req, res, next) => {
-  if (validateAgainstSchema(req.body, RosterSchema)) {
+  //if (validateAgainstSchema(req.body, RosterSchema)) {
     try {
 
       await updateCourseRoster(req.params.id, req.body);
@@ -183,9 +183,9 @@ router.post('/:id/students', /*requireAuthentication, requireCourseInstructorOrA
      // Throw a 404 for all errors incuding DB issues
      next(new CustomError("Course not found.", 404));
     }
-  } else {
-    next(new CustomError("Request is not Valid", 400));
-  }
+  //} else {
+   // next(new CustomError("Request is not Valid", 400));
+  //}
 });
 
 
