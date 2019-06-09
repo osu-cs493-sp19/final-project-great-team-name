@@ -1,14 +1,14 @@
+require('dotenv').config()
+
 const express = require('express');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const CustomError = require("./lib/custom-error");
-const { connectToMongo } = require ('./lib/mongoDB');
-
+const {connectToMongo} = require("./lib/mongoDB");
 const logger = require('./lib/logger');
-
-const {validateAgainstSchema } = ('./lib/validation');
-
 const api = require('./api');
+
+const { rateLimit } = require('./lib/redis');
 
 const app = express();
 const port = process.env.PORT || 8000;
@@ -22,6 +22,10 @@ app.use(morgan('dev'));
 app.use(bodyParser.json());
 
 app.use(logger);
+
+//Rate Limit
+app.use(rateLimit);
+
 
 /*
  * All routes for the API are written in modules in the api/ directory.  The
@@ -46,13 +50,8 @@ app.use('*', function (req, res, next) {
   });
 });
 
-connectToMongo(() => 
-{
-  app.listen(port, function() 
-  {
-    console.log("== Server is running on port", port);
-  });
+connectToMongo(()=>{
+  app.listen(port, function() {
+  console.log("== Server is running on port", port);
 });
-
-
-
+})
