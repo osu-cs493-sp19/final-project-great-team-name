@@ -27,7 +27,7 @@ const CourseSchema = {
  number: { required: true },
  title: { required: true },
  term: { required: true },
- instructorId: { required: true },
+ instructorId: { required: false },
 };
 exports.CourseSchema = CourseSchema;
 
@@ -36,8 +36,8 @@ exports.CourseSchema = CourseSchema;
  * Schema describing required/optional fields for a Course roster update.
  */
 const RosterSchema = {
- add: { required: true },
- remove: { required: true }
+ add: { required: false },
+ remove: { required: false }
 };
 exports.RosterSchema = RosterSchema;
 
@@ -106,7 +106,7 @@ exports.getAllCourses = async (page) => {
   console.log(` == Getting All Courses`);
   try
   {
-    console.log(` == getCourses: ${page}, ${subject}, ${number}, ${term}`);
+    console.log(` == getAllCourses:`);
     const collection = getDBReference().collection('courses');
     const courseCount = await collection.countDocuments();
     const lastPage = Math.ceil(courseCount / PAGE_SIZE);
@@ -222,6 +222,7 @@ exports.updateCourse = async (id, patch) => {
   try
   {
     console.log(` == Updating Course ID: ${id}`);
+    console.log(` == Patch Contents: ${patch}`);
     const collection = getDBReference.collection('courses');
     var result = await collection.findOneAndUpdate(
       { _id: new _ID(id)},
@@ -307,13 +308,19 @@ exports.updateCourseRoster = async (courseId, roster) => {
     const addStudents = roster.add;
     const remStudents = roster.remove;
     var i;
-    for(i = 0; i < addStudents.length; i++)
+    if(addStudents)
     {
-      await this.addStudentToCourse(addStudents[i], courseId);
+      for(i = 0; i < addStudents.length; i++)
+      {
+        await this.addStudentToCourse(addStudents[i], courseId);
+      }
     }
-    for(i = 0; i < remStudents.length; i++)
+    if(remStudents)
     {
-      await this.removeStudentFromCourse(remStudents[i], courseId);
+      for(i = 0; i < remStudents.length; i++)
+      {
+        await this.removeStudentFromCourse(remStudents[i], courseId);
+      }
     }
   }
   catch(err)
