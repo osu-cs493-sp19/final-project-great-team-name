@@ -27,8 +27,8 @@ services:
     restart: always
     volumes:
       - mongo-data:/data/db
-    #  - ./lib/dump:/docker-entrypoint-initdb.d
-      - ./db-init/:/docker-entrypoint-initdb.d
+      - ./lib/dump:/docker-entrypoint-initdb.d
+    # - ./db-init/:/docker-entrypoint-initdb.d
       - ./mongodb-keyfile:/data/mongodb-keyfile
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
@@ -43,7 +43,7 @@ services:
     restart: always
     volumes:
       - mongo-data:/data/db
-      - ./db-init/:/docker-entrypoint-initdb.d
+      - ./lib/dump:/docker-entrypoint-initdb.d
       - ./mongodb-keyfile:/data/mongodb-keyfile
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
