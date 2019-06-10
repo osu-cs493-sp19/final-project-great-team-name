@@ -42,21 +42,9 @@ exports.insertNewUser = async (user) => {
   const collection = await db.collection('users');
   const passwordHash = await bcrypt.hash(userToInsert.password, 8);
   userToInsert.password = passwordHash;
-  const result = await collection.insertOne(userToInsert).insertedId;
-  return result;
+  const result = await collection.insertOne(userToInsert);
+  return result.insertedId;
 }
-
-
-/*
- * Authenticate a User against the DB.
- someone else can work on this
- */
-exports.authenticateUser = async (user) => {
-  console.log(" == authenticateUser: user", user);
-
-  return true;
-}
-
 
 /*
  * Fetch details about a User by Id
@@ -64,25 +52,39 @@ exports.authenticateUser = async (user) => {
 exports.getUserDetailsById = async (id) => {
   const db = getDBReference();
   var user;
-  user = await db.collection('users').findOne({ _id: new mongodb.ObjectId(id)});
+  user = await db.collection('users').findOne({ _id: new ObjectId(id)});
   console.log(" == getUserDetailsById id", id);
   delete user.password;
   return user;
 }
 
+/*
+ * Authenticate a User against the DB.
+ someone else can work on this
+ */
+exports.authenticateUser = async (user) => {
+  console.log(" == authenticateUser: user", user);
+  const checkUser = await getUserDetailsByEmail(user.email);
+  const authenticated = user && await bcrypt.compare(user.password, checkUser.password)
+  return authenticated;
+}
+
 
 /*
  * Fetch details about a User by Email address
+ * Use a second like for exports because we need to call this function
+ * locally as well.
  */
-exports.getUserDetailsByEmail = async (email) => {
+getUserDetailsByEmail = async (email) => {
   const db = getDBReference();
 
-  // becasue the varialbe name and the object name are the same,
+  // becasue the variable name and the object name are the same,
   //we can just leave it as { email, } thnx es6
 
    var user;
    user = await db.collection('users').findOne({email})
    console.log(" == getUserDetailsByEmail email", email,"\nUser: ",user);
-   delete user.password;
+
   return user;
 }
+exports.getUserDetailsByEmail = getUserDetailsByEmail;
