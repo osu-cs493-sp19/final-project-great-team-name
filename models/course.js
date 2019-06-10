@@ -74,17 +74,17 @@ exports.getCourses = async (page, subject, number, term) => {
       .toArray();
 
     const pagLinks = {};
-    if(page < lastPage) 
+    if(page < lastPage)
     {
       pagLinks.nextPage = `/courses?page=${page + 1}`;
       pagLinks.lastPage = `/courses?page=${lastPage}`;
     }
-    if(page > 1) 
+    if(page > 1)
     {
       pagLinks.prevPage = `/courses?page=${page - 1}`;
       pagLinks.firstPage = '/courses?page=1';
     }
-  
+
     return {
       courses: results,
       page: page,
@@ -122,17 +122,17 @@ exports.getAllCourses = async (page) => {
       .toArray();
 
     const pagLinks = {};
-    if(page < lastPage) 
+    if(page < lastPage)
     {
       pagLinks.nextPage = `/courses?page=${page + 1}`;
       pagLinks.lastPage = `/courses?page=${lastPage}`;
     }
-    if(page > 1) 
+    if(page > 1)
     {
       pagLinks.prevPage = `/courses?page=${page - 1}`;
       pagLinks.firstPage = '/courses?page=1';
     }
-  
+
     return {
       courses: results,
       page: page,
@@ -149,6 +149,24 @@ exports.getAllCourses = async (page) => {
   }
 };
 
+exports.getCoursesByInstructorId = async (id) => {
+  const collection = getDBReference().collection('courses');
+  const results = await collection.find( {instructorId: id}, {_id: 1 } ).toArray();
+  return results;
+};
+
+exports.getCoursesByStudentId = async (id) => {
+  const collection = getDBReference().collection('courses');
+  const courses = await collection.find({}).toArray();
+  var i;
+  var studentCourse = [];
+  for(i=0; i < courses.length(); i++){
+    if(studentIdInCourseId(id, courses[i]._id)){
+      studentCourse.push(courses[i]._id)
+    }
+  }
+  return studentCourse;
+};
 
 /*
  * Insert a new course into the DB
@@ -169,7 +187,7 @@ exports.insertCourse = async (course) => {
     console.log(` !!! Error in /models/courses.js  :  insertCourse()`);
     console.log(err);
   }
-  
+
 };
 
 
@@ -269,7 +287,7 @@ exports.getCourseRoster = async (courseId) => {
       var myUser = getUserDetailsById(students[i]);
       userObjects.push(myUser);
     }
-    
+
   }
   catch(err)
   {
@@ -326,7 +344,7 @@ exports.getCourseAssignments = async (id, page) => {
       .skip(offset)
       .limit(PAGE_SIZE)
       .toArray();
-  
+
     return {
       assignments: results,
       page: page,
@@ -354,9 +372,9 @@ exports.instructorOwnsCourse = async (instructor, course) => {
     const collection = getDBReference().collection('courses');
     const results = await collection.find(
       {
-        $and: 
+        $and:
         [
-          { _id: new _ID(course.id)}, 
+          { _id: new _ID(course.id)},
           {instructorId: new _ID(instructor.id)}
         ]
       }).toArray();
@@ -415,10 +433,10 @@ exports.studentIdInCourseId = async (studentId, courseId) => {
     console.log(` == Checking if Student ID:${studentId} is Enrolled In Course ID:${courseId}`);
     const collection = getDBReference().collection('students');
     const student = await collection.findOne(
-      { 
-        $and: [ 
-          {studentId: studentId}, 
-          {courseId: courseId}, 
+      {
+        $and: [
+          {studentId: studentId},
+          {courseId: courseId},
         ]
       }
     );
@@ -438,7 +456,7 @@ exports.addStudentToCourse = async (studentId, courseId) => {
   try
   {
     const collection = getDBReference().collection('students');
-    const usr = await getUserDetailsById(studentId); 
+    const usr = await getUserDetailsById(studentId);
     const student = {
       studentId: new _ID(usr.id),
       courseId: courseId
@@ -488,10 +506,10 @@ exports.removeStudentFromCourse = async (studentId, courseId) => {
     console.log(` == Removing Student ID:${studentId} from Course ID:${courseId} `);
     const collection = getDBReference().collection('students');
     var result = await collection.remove(
-      { 
-        $and: [ 
-          {studentId: studentId}, 
-          {courseId: courseId}, 
+      {
+        $and: [
+          {studentId: studentId},
+          {courseId: courseId},
         ]
       }
     );
@@ -512,20 +530,20 @@ exports.getStudentsInCourse = async (courseId, page) =>
     console.log(` == Getting List Of Students In Course ID:${courseId} `);
     const collection = getDBReference().collection('students');
     const count = await collection.find({courseId: new _ID(courseId)}).countDocuments();
-  
+
     const lastPage = Math.ceil(count / PAGE_SIZE);
     page = page < 1 ? 1 : page;
     page = page > lastPage ? lastPage : page;
     const start = (page - 1) * PAGE_SIZE;
-  
+
     const results = await collection.find({courseId: new _ID(courseId)})
       .sort({ _id: 1 })
       .skip(start)
       .limit(PAGE_SIZE)
       .toArray();
-  
+
     const pagLinks = {};
-  
+
     if (page < lastPage) {
       pagLinks.nextPage = `/students?page=${page + 1}`;
       pagLinks.lastPage = `/students?page=${lastPage}`;
@@ -534,7 +552,7 @@ exports.getStudentsInCourse = async (courseId, page) =>
       pagLinks.prevPage = `/students?page=${page - 1}`;
       pagLinks.firstPage = '/students?page=1';
     }
-  
+
     return {
       students: results,
       page: page,
@@ -543,12 +561,12 @@ exports.getStudentsInCourse = async (courseId, page) =>
       count: count,
       links: pagLinks
     };
-    
+
   }
   catch(err)
   {
     console.log(` !!! Error in /models/courses.js  :  getStudentsInCourse()`);
     console.log(err);
   }
- 
+
 }
