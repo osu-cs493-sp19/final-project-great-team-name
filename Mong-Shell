@@ -1,0 +1,1 @@
+mongo --username root --password --authenticationDatabase admin --host mongodb --port 27017
