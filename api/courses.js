@@ -12,27 +12,14 @@ const CustomError = require("../lib/custom-error");
 const {
   CourseSchema,
   RosterSchema,
-  StudentSchema,
   getCourses,
-  getAllCourses,
   insertCourse,
   getCourseDetailsById,
   updateCourse,
   deleteCourse,
   getCourseRoster,
   updateCourseRoster,
-  getCourseAssignments,
-  instructorOwnsCourse,
-  instructorIdOwnsCourseId,
-  studentIdInCourseId,
-  addStudentToCourse,
-  getStudentsCSV,
-  removeStudentFromCourse,
-  getStudentsInCourse,
-
-
-
-
+  getCourseAssignments
 } = require('../models/course');
 
 
@@ -43,11 +30,11 @@ const {
 router.get('/', async (req, res, next) => {
   try {
     // Extract paramenters
-    //const subject = req.query.subject;
-    //const number = req.query.number;
-    //const term = req.query.term;
-    //const page = parseInt(req.query.page);
-    const courses = getAllCourses(1);
+    const subject = req.query.subject;
+    const number = req.query.number;
+    const term = req.query.term;
+    const page = parseInt(req.query.page);
+    const courses = getCourses(page, subject, number, term);
 
     res.status(200).send(courses);
 
@@ -64,8 +51,8 @@ router.get('/', async (req, res, next) => {
  * requireAdmin - must have Admin Role
  *
  */
-router.post('/', /*requireAuthentication, requireAdmin,*/ async (req, res, next) => {
- //if (validateAgainstSchema(req.body, CourseSchema)) {
+router.post('/', requireAuthentication, requireAdmin, async (req, res, next) => {
+ if (validateAgainstSchema(req.body, CourseSchema)) {
    try {
 
      const id = await insertCourse(req.body);
@@ -76,9 +63,9 @@ router.post('/', /*requireAuthentication, requireAdmin,*/ async (req, res, next)
      // Throw a 500 for all errors incuding DB issues
      next(new CustomError("Error adding course.", 500));
    }
- //} else {
- // next(new CustomError("Request is not Valid", 400));
- //}
+ } else {
+  next(new CustomError("Request is not Valid", 400));
+ }
 });
 
 
@@ -89,7 +76,7 @@ router.post('/', /*requireAuthentication, requireAdmin,*/ async (req, res, next)
 router.get('/:id', async (req, res, next) => {
   try {
 
-    const course = await getCourseDetailsById(req.params.id);
+    const course = getCourseDetailsById(req.params.id);
 
     res.status(200).send(course);
 
@@ -151,10 +138,10 @@ router.delete('/:id', requireAuthentication, requireAdmin, async (req, res, next
  * requireCourseInstructorOrAdmin - must be Admin or Instructor of the course
  *
  */
-router.get('/:id/students', /*requireAuthentication, requireCourseInstructorOrAdmin,*/ async (req, res, next) => {
+router.get('/:id/students', requireAuthentication, requireCourseInstructorOrAdmin, async (req, res, next) => {
 
   try {
-    const roster = await getStudentsInCourse(req.params.id, 1);
+    const roster = await getCourseRoster(req.params.id);
 
     res.status(200).send(roster);
 
@@ -171,11 +158,11 @@ router.get('/:id/students', /*requireAuthentication, requireCourseInstructorOrAd
  * requireCourseInstructorOrAdmin - must be Admin or Instructor of the course
  *
  */
-router.post('/:id/students', /*requireAuthentication, requireCourseInstructorOrAdmin,*/ async (req, res, next) => {
-  //if (validateAgainstSchema(req.body, RosterSchema)) {
+router.post('/:id/students', requireAuthentication, requireCourseInstructorOrAdmin, async (req, res, next) => {
+  if (validateAgainstSchema(req.body, RosterSchema)) {
     try {
 
-      await updateCourseRoster(req.params.id, req.body);
+      const id = await updateCourseRoster(req.params.id, req.body);
 
       res.status(200).send({});
 
@@ -183,9 +170,9 @@ router.post('/:id/students', /*requireAuthentication, requireCourseInstructorOrA
      // Throw a 404 for all errors incuding DB issues
      next(new CustomError("Course not found.", 404));
     }
-  //} else {
-   // next(new CustomError("Request is not Valid", 400));
-  //}
+  } else {
+    next(new CustomError("Request is not Valid", 400));
+  }
 });
 
 
@@ -195,17 +182,16 @@ router.post('/:id/students', /*requireAuthentication, requireCourseInstructorOrA
  * requireCourseInstructorOrAdmin - must be Admin or Instructor of the course
  *
  */
-router.get('/:id/roster', /*requireAuthentication, requireCourseInstructorOrAdmin,*/ async (req, res, next) => {
+router.get('/:id/roster', requireAuthentication, requireCourseInstructorOrAdmin, async (req, res, next) => {
 
   try {
-
     // Fetch the coster
-    const roster = await getStudentsCSV(req.params.id);
+    const roster = await getCourseRoster(req.params.id);
 
     // convert to csv and stream file
     const csv = "name, id, email";
 
-    res.status(200).send(roster);
+    res.status(200).send(csv);
 
   } catch (err) {
     // Throw a 404 for all errors incuding DB issues
