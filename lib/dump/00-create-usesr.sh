@@ -14,7 +14,10 @@
 # defined, then feed JS into mongo to create a user with the specified
 # credentials.
 if [ "$MONGO_USER" ] && [ "$MONGO_PASSWORD" ] && [ "$MONGO_INITDB_DATABASE" ]; then
-	mongo --quiet "$MONGO_INITDB_DATABASE" <<-EOJS
+	mongo --quiet "$MONGO_INITDB_DATABASE"  \
+  --username "$MONGO_INITDB_ROOT_USERNAME" \
+  --password "$MONGO_INITDB_ROOT_PASSWORD" \
+  --authenticationDatabase admin <<-EOJS
 		db.createUser({
 			user: $(_js_escape "$MONGO_USER"),
 			pwd: $(_js_escape "$MONGO_PASSWORD"),
