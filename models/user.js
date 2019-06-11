@@ -3,7 +3,9 @@
  * User model and related functions.
  *
  */
-
+const bcrypt = require('bcryptjs');
+const { ObjectId } = require('mongodb');
+const { getDBReference } = require("../lib/mongoDB")
 const { extractValidFields } = require('../lib/validation');
 const CustomError = require("../lib/custom-error");
 
@@ -35,36 +37,54 @@ exports.AuthSchema = AuthSchema;
  */
 exports.insertNewUser = async (user) => {
   console.log(" == insertNewUser: user", user);
-
-  return "123";
+  const userToInsert = extractValidFields(user, UserSchema);
+  const db = getDBReference();
+  const collection = await db.collection('users');
+  const passwordHash = await bcrypt.hash(userToInsert.password, 8);
+  userToInsert.password = passwordHash;
+  const result = await collection.insertOne(userToInsert);
+  return result.insertedId;
 }
-
-
-/*
- * Authenticate a User against the DB.
- */
-exports.authenticateUser = async (user) => {
-  console.log(" == authenticateUser: user", user);
-
-  return true;
-}
-
 
 /*
  * Fetch details about a User by Id
  */
 exports.getUserDetailsById = async (id) => {
+  const db = getDBReference();
+  var user;
+  user = await db.collection('users').findOne({ _id: new ObjectId(id)});
   console.log(" == getUserDetailsById id", id);
+  delete user.password;
+  return user;
+}
 
-  return "123";
+/*
+ * Authenticate a User against the DB.
+ someone else can work on this
+ */
+exports.authenticateUser = async (user) => {
+  console.log(" == authenticateUser: user", user);
+  const checkUser = await getUserDetailsByEmail(user.email);
+  const authenticated = user && await bcrypt.compare(user.password, checkUser.password)
+  return authenticated;
 }
 
 
 /*
  * Fetch details about a User by Email address
+ * Use a second like for exports because we need to call this function
+ * locally as well.
  */
-exports.getUserDetailsByEmail = async (email) => {
-  console.log(" == getUserDetailsByEmail email", email);
+getUserDetailsByEmail = async (email) => {
+  const db = getDBReference();
 
-  return "1234";
+  // becasue the variable name and the object name are the same,
+  //we can just leave it as { email, } thnx es6
+
+   var user;
+   user = await db.collection('users').findOne({email})
+   console.log(" == getUserDetailsByEmail email", email,"\nUser: ",user);
+
+  return user;
 }
+exports.getUserDetailsByEmail = getUserDetailsByEmail;
