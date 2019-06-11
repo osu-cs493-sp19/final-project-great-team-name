@@ -26,7 +26,7 @@ services:
     image: mongo:latest
     restart: always
     volumes:
-      - mongo-data:/data/db
+      - mongo-data1:/data/db
       - ./lib/dump:/docker-entrypoint-initdb.d
     # - ./db-init/:/docker-entrypoint-initdb.d
       - ./mongodb-keyfile:/data/mongodb-keyfile
@@ -42,7 +42,22 @@ services:
     image: mongo:latest
     restart: always
     volumes:
-      - mongo-data:/data/db
+      - mongo-data2:/data/db
+      - ./lib/dump:/docker-entrypoint-initdb.d
+      - ./mongodb-keyfile:/data/mongodb-keyfile
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_DB_NAME}
+      MONGO_USER: ${MONGO_USER}
+      MONGO_PASSWORD: ${MONGO_PASSWORD}
+    command: --keyFile /data/mongodb-keyfile --replSet ${MONGO_REPL_SET_NAME}
+
+  mongodb-3:
+    image: mongo:latest
+    restart: always
+    volumes:
+      - mongo-data3:/data/db
       - ./lib/dump:/docker-entrypoint-initdb.d
       - ./mongodb-keyfile:/data/mongodb-keyfile
     environment:
@@ -61,7 +76,7 @@ services:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
       MONGO_REPL_SET_NAME: ${MONGO_REPL_SET_NAME}
-      MONGO_REPL_SET_HOSTS: mongodb-1 mongodb-2
+      MONGO_REPL_SET_HOSTS: mongodb-1 mongodb-2 mongodb-3
     entrypoint: sh /rs-init/rs-init.sh
 
   redis:
@@ -78,5 +93,9 @@ services:
 #   redis-net:
 
 volumes:
-  mongo-data:
-    name: tarpaulin-university-data
+  mongo-data1:
+    name: tarpaulin-university-data1
+  mongo-data2:
+    name: tarpaulin-university-data2
+  mongo-data3:
+    name: tarpaulin-university-data3
