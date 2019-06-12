@@ -23,13 +23,13 @@ services:
       REDIS_HOST: redis
 
   mongodb-1:
-    image: mongo:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.mongo
     restart: always
     volumes:
       - mongo-data1:/data/db
       - ./lib/dump:/docker-entrypoint-initdb.d
-    # - ./db-init/:/docker-entrypoint-initdb.d
-      - ./mongodb-keyfile:/data/mongodb-keyfile
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
@@ -39,7 +39,9 @@ services:
     command: --keyFile /data/mongodb-keyfile --replSet ${MONGO_REPL_SET_NAME}
 
   mongodb-2:
-    image: mongo:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.mongo
     restart: always
     volumes:
       - mongo-data2:/data/db
@@ -54,7 +56,9 @@ services:
     command: --keyFile /data/mongodb-keyfile --replSet ${MONGO_REPL_SET_NAME}
 
   mongodb-3:
-    image: mongo:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.mongo
     restart: always
     volumes:
       - mongo-data3:/data/db
