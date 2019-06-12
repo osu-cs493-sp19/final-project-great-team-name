@@ -13,6 +13,7 @@ const {
   requireCourseInstructorOrAdmin,
   requireEnrolledStudent
 } = require('../lib/auth');
+
 const { gridFSUpload,publish_update_job} = require('../lib/mq/producer');
 
 const {
@@ -23,7 +24,8 @@ const {
   updateAssignment,
   deleteAssignment,
   getAssignmentSubmissions,
-  insertSubmission
+  insertSubmission,
+  getGridFileStreamById,
 } = require('../models/assignment');
 
 const crypto = require('crypto');
@@ -187,6 +189,59 @@ router.post('/:id/submissions', requireAuthentication, requireEnrolledStudent,up
     }
   } else {
    next(new CustomError("Request is not Valid", 400));
+  }
+});
+
+
+async function hookFileToReq(req,res,next){
+
+  try{
+    var photostream = await getGridFileStreamById(req.params.id);
+
+    var bufs = []; 
+    if( photostream){
+      photostream
+      .on('file', (file) => {
+        res.status(200).type("application/pdf");
+      })
+      .on('error', (err) => {
+          if (err.code === 'ENOENT') {
+            console.log(err);
+            next();
+          } else {
+            console.log(err);
+            next(err);
+          }
+        })
+        .pipe(res);
+    }
+    else{
+      req.photo=null;
+      next();
+    }
+
+  }
+  catch (err) {
+    console.error(err);
+    res.status(500).send({
+      error: "Unable to fetch photo.  Please try again later."
+    });
+  }
+
+}
+// no auth for get
+router.get("/blobs/:id", hookFileToReq, async (req,res,next)=>{
+  try {
+    // buffer object
+    if (req.photo) {
+      console.log("we have a photo on the req", req.photo);
+      res.status(200).send(photo);
+    } else {
+      next();
+    }
+  } catch (err) {
+    console.error(err);
+    next(new CustomError("Request is not Valid", 500))
   }
 });
 

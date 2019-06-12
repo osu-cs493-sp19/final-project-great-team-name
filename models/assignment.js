@@ -6,9 +6,8 @@
 
 const { extractValidFields,validateAgainstSchemas} = require('../lib/validation');
 //GRID fs for storing data,
-const { getDBReference, _ID } = require ('../lib/mongoDB');
+const { getDBReference, _ID, grid_bucket  } = require ('../lib/mongoDB');
 const multer = require('multer');
-const {gridFSBucet} = require('mongodb');
 const CustomError = require("../lib/custom-error");
 
 // below is the macro for the assigments key value
@@ -308,6 +307,23 @@ exports.insertSubmission = async (submission) => {
   catch(e){
     console.log(e);
   }
+}
+/*
+UNIT TESTING
+input:
+GET localhost:8000/assignments/blobs/5d00aa907931994f19f9c44c
+
+
+output:
+raw file
+*/
+exports.getGridFileStreamById = async (grid_doc_id) =>{
+  console.log("=== About to serve RAW: \nID: ", grid_doc_id);
+  var bucket = new grid_bucket(getDBReference(), {bucketName:TURNIN_BLOBS });
+  var result = await bucket.find({ _id: new _ID(grid_doc_id) } ).toArray();
+  console.log("results: ", result.length);
+  result = await bucket.openDownloadStream(new _ID(grid_doc_id));
+  return result;
 }
 
   // var bucket = new gridFSBucket(getDBReference(),{bucketName: TURNIN_BLOBS})
