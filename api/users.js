@@ -18,6 +18,8 @@ const {
    getUserDetailsByEmail
 } = require('../models/user');
 
+const { getInstructorsCourses, getStudentsCourses} = require('../models/course');
+
 
 /*
  * Fetches information about a user based on their role
@@ -35,11 +37,11 @@ router.get('/:id', requireAuthentication, async (req, res, next) => {
 
     // If Instructor, fetch the list of Courses they teach
     if (user.role == 'instructor') {
-      user.courses = {};
+      user.courses = await getInstructorsCourses(req.params.id);
     }
     // If Student, fetch the list of Courses they are enrolled in
     if (user.role == 'student') {
-      user.courses = {};
+      user.courses = await getStudentsCourses(req.params.id);
     }
 
     res.status(201).send(user);
@@ -96,7 +98,7 @@ router.post('/login', async (req, res, next) => {
         // Fetch additional data about user to include in token
         const user = await getUserDetailsByEmail(req.body.email);
         delete user.password;
-         
+
         const token = generateAuthToken(user);
 
         res.status(200).send({ token: token });
