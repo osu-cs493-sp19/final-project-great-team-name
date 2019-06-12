@@ -13,6 +13,7 @@ const {
   requireCourseInstructorOrAdmin,
   requireEnrolledStudent
 } = require('../lib/auth');
+const { gridFSUpload,publish_update_job} = require('../lib/mq/producer');
 
 const {
   AssignmentSchema,
@@ -33,7 +34,7 @@ const upload = multer({
     destination: `${__dirname}/uploads`,
     filename: (req, file, callback) => {
                   const ext= crypto.pseudoRandomBytes(8).toString('hex');
-                  callback(null, `${req.body.title}${ext}.pdf`);
+                  callback(null, `${req.body.title}-${ext}.pdf`);
                 },
     fileFilter: (req, file, callback) => {
                   callback(null, true);
@@ -158,15 +159,31 @@ router.get('/:id/submissions', requireAuthentication, requireCourseInstructorOrA
  * requireEnrolledStudent - Student must be enrolled in course
  * upload.single('pdf')
  */
-router.post('/:id/submissions', requireAuthentication, requireEnrolledStudent, async (req, res, next) => {
-  if (validateAgainstSchema(req.body, SubmissionSchema) && req.params.id === req.body.assignmentId) {
+
+ //REQUIRES:
+ // multipart form data with the file binary assigned to the key "file"
+ //publish_update_job API to use with the rabbitq and the consumer.
+
+router.post('/:id/submissions', requireAuthentication, requireEnrolledStudent,upload.single('file'), async (req, res, next) => {
+  if ( validateAgainstSchema(req.body, SubmissionSchema) && req.params.id === req.body.assignmentId ) {
     try {
-      const id = await insertSubmission(req.body);
-      res.status(201).send({id: id});
+      const submission_meta_id = await insertSubmission(req.body);
+      req.file.meta_id = submission_meta_id.insertedId;
+      await gridFSUpload(req.file,(gridfs_file_loc)=>{
+        var links = {
+          submission_meta_id: req.file.meta_id,
+          submission_file_id: gridfs_file_loc
+        }
+
+        publish_update_job(links);
+
+        res.status(201).send(links);
+      });
+
 
     } catch (err) {
      // Throw a 404 for all errors incuding DB issues
-     next(new CustomError("Assignment not found.", 404));
+     next(new CustomError(err.toString(), 404));
     }
   } else {
    next(new CustomError("Request is not Valid", 400));
