@@ -46,7 +46,6 @@ services:
     volumes:
       - mongo-data2:/data/db
       - ./lib/dump:/docker-entrypoint-initdb.d
-      - ./mongodb-keyfile:/data/mongodb-keyfile
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
@@ -63,7 +62,6 @@ services:
     volumes:
       - mongo-data3:/data/db
       - ./lib/dump:/docker-entrypoint-initdb.d
-      - ./mongodb-keyfile:/data/mongodb-keyfile
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
