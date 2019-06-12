@@ -9,7 +9,7 @@ const { extractValidFields } = require('../lib/validation');
 const CustomError = require("../lib/custom-error");
 const { Parser } = require('json2csv');
 
-const { getDBReference, _ID } = require ('../lib/mongoDB');
+const { getDBReference, _ID } = require ('../lib/mongo');
 
 const {
   getUserDetailsById,
