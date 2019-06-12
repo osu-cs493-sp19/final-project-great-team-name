@@ -4,3 +4,5 @@ COPY mongodb-keyfile /data
 
 RUN chmod 600 /data/mongodb-keyfile
 RUN chown mongodb /data/mongodb-keyfile
+
+CMD ["mongorestore","docker-entrypoint-initdb.d"]
