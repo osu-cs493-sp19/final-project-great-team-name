@@ -81,6 +81,13 @@ services:
       MONGO_REPL_SET_HOSTS: mongodb-1 mongodb-2 mongodb-3
     entrypoint: sh /rs-init/rs-init.sh
 
+  rabbitd:
+    image: rabbitmq:3-management
+    ports:
+      - 5672:5672
+      - 15672:15672
+
+
   redis:
     image: redis:latest
     ports:
@@ -91,8 +98,6 @@ services:
     #   - redis-net
     restart: always
 
-# networks:
-#   redis-net:
 
 volumes:
   mongo-data1:

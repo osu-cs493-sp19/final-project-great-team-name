@@ -82,6 +82,7 @@ getUserDetailsByEmail = async (email) => {
   //we can just leave it as { email, } thnx es6
 
    var user;
+   var users = await db.collection('users').find().toArray();
    user = await db.collection('users').findOne({email})
    console.log(" == getUserDetailsByEmail email", email,"\nUser: ",user);
 

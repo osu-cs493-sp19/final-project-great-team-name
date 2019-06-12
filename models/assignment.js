@@ -6,28 +6,10 @@
 
 const { extractValidFields,validateAgainstSchemas} = require('../lib/validation');
 //GRID fs for storing data,
-const { getDBReference, _ID } = require ('../lib/mongoDB');
+const { getDBReference, _ID, grid_bucket  } = require ('../lib/mongoDB');
 const multer = require('multer');
-const {gridFSBucet} = require('mongodb');
 const CustomError = require("../lib/custom-error");
 
-
-
-const upload = multer({
-  storage: multer.diskStorage({
-    destination: `${__dirname}/uploads`,
-    filename: (req, file, callback) => {
-                  const filename = crypto.pseudoRandomBytes(16).toString('hex');
-                  const extension = imageTypes[file.mimetype];
-                  callback(null, `${filename}.${extension}`);
-                },
-    fileFilter: (req, file, callback) => {
-                  callback(null, !!imageTypes[file.mimetype]);
-                },
-
-  })
-
-});
 // below is the macro for the assigments key value
 const HW = "assignments";
 const TURNIN = "submissions"
@@ -53,7 +35,7 @@ exports.AssignmentSchema = AssignmentSchema;
 const SubmissionSchema = {
  assignmentId: { required: true },
  timestamp: { required: false }, // This should be calculated?
- file: { required: true }
+ file: { required: false }
 };
 exports.SubmissionSchema = SubmissionSchema;
 
@@ -313,18 +295,35 @@ output:
 }
 */
 exports.insertSubmission = async (submission) => {
-  console.log(" == insertSubmission: id, submission", submission);
+  console.log(" == insertSubmission: id, submission");
   var result;
   try{
       const sub_i = extractValidFields(submission,SubmissionSchema);
       sub_i.timestamp = new Date().toString();
       const collection = getDBReference().collection(TURNIN);
       result = await collection.insertOne(sub_i);
-      return result.insertedId;
+      return result;
   }
   catch(e){
     console.log(e);
   }
+}
+/*
+UNIT TESTING
+input:
+GET localhost:8000/assignments/blobs/5d00aa907931994f19f9c44c
+
+
+output:
+raw file
+*/
+exports.getGridFileStreamById = async (grid_doc_id) =>{
+  console.log("=== About to serve RAW: \nID: ", grid_doc_id);
+  var bucket = new grid_bucket(getDBReference(), {bucketName:TURNIN_BLOBS });
+  var result = await bucket.find({ _id: new _ID(grid_doc_id) } ).toArray();
+  console.log("results: ", result.length);
+  result = await bucket.openDownloadStream(new _ID(grid_doc_id));
+  return result;
 }
 
   // var bucket = new gridFSBucket(getDBReference(),{bucketName: TURNIN_BLOBS})
