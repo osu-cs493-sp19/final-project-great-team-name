@@ -1,0 +1,6 @@
+FROM mongo:latest
+
+COPY mongodb-keyfile /data
+
+RUN chmod 600 /data/mongodb-keyfile
+RUN chown mongodb /data/mongodb-keyfile
