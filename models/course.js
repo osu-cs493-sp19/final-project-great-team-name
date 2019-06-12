@@ -417,6 +417,10 @@ exports.instructorOwnsCourse = async (instructor, course) => {
         instructorId: instructor.id
         
       }).toArray();
+    if(!results)
+    {
+      return false;
+    }
     if(results.length == 0)
     {
       return false;
@@ -687,4 +691,62 @@ exports.getStudentsInCourse = async (courseId, page) =>
     return({error: "There was a problem getting students"});
   }
  
+}
+
+exports.getStudentsCourses = async (studentId) =>
+{
+  try
+  {
+    const collection = getDBReference().collection('students');
+    const studentEnrollment = await collection.find({ studentId: new _ID(studentId)}).toArray();
+    if(!studentEnrollment)
+    {
+      return({courses: "No Courses For This User"});
+    }
+    var i;
+    var studentCourseIds = [];
+    console.log(` === Found ${studentEnrollment.length} Courses For This User`);
+    for(i = 0; i < studentEnrollment.length; i++)
+    {
+      studentCourseIds.push(studentEnrollment[i].courseId);
+    }
+    var studentCourses = [];
+    for(i = 0; i < studentCourseIds.length; i++)
+    {
+      var course = await this.getCourseDetailsById(studentCourseIds[i]);
+      if(course)
+      {
+        studentCourses.push(course);
+      }
+    }
+    return studentCourses;
+  }
+  catch(err)
+  {
+    console.log(` !!! Error in /models/courses.js  :  getStudentsCourses()`);
+    console.log(err);
+    return({error: "There was a problem getting the students courses"});
+  }
+}
+
+
+exports.getInstructorsCourses = async (instructorId) =>
+{
+  try
+  {
+    const collection = getDBReference().collection('courses');
+    const instructorCourses = await collection.find({ instructorId: instructorId}).toArray();
+    if(!instructorCourses)
+    {
+      return({courses: "No Courses For This User"});
+    }
+
+    return instructorCourses;
+  }
+  catch(err)
+  {
+    console.log(` !!! Error in /models/courses.js  :  getInstructorsCourses()`);
+    console.log(err);
+    return({error: "There was a problem getting the Instructors courses"});
+  }
 }
